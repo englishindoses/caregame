@@ -1,0 +1,5 @@
+# LibreOffice / OpenOffice lock files
+.~lock.*#
+
+# Temporary images
+game/assets/images/temp/

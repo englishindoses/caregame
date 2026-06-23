@@ -1,0 +1,17 @@
+const ITEMS = [
+    { id: 'yogurt',   name: 'yogurt',   request: 'some yogurt',   image: 'item_yogurt',   audio: 'request_yogurt',   category: 'food'    },
+    { id: 'banana',   name: 'banana',   request: 'a banana',      image: 'item_banana',   audio: 'request_banana',   category: 'food'    },
+    { id: 'apple',    name: 'apple',    request: 'an apple',      image: 'item_apple',    audio: 'request_apple',    category: 'food'    },
+    { id: 'sandwich', name: 'sandwich', request: 'a sandwich',    image: 'item_sandwich', audio: 'request_sandwich', category: 'food'    },
+    { id: 'biscuit',  name: 'biscuit',  request: 'a biscuit',     image: 'item_biscuit',  audio: 'request_biscuit',  category: 'food'    },
+    { id: 'water',    name: 'water',    request: 'some water',    image: 'item_water',    audio: 'request_water',    category: 'drink'   },
+    { id: 'milk',     name: 'milk',     request: 'some milk',     image: 'item_milk',     audio: 'request_milk',     category: 'drink'   },
+    { id: 'juice',    name: 'juice',    request: 'some juice',    image: 'item_juice',    audio: 'request_juice',    category: 'drink'   },
+    { id: 'blanket',  name: 'blanket',  request: 'my blanket',    image: 'item_blanket',  audio: 'request_blanket',  category: 'sleep'   },
+    { id: 'pillow',   name: 'pillow',   request: 'my pillow',     image: 'item_pillow',   audio: 'request_pillow',   category: 'sleep'   },
+    { id: 'teddy',    name: 'teddy',    request: 'my teddy',      image: 'item_teddy',    audio: 'request_teddy',    category: 'comfort' },
+    { id: 'book',     name: 'book',     request: 'my book',       image: 'item_book',     audio: 'request_book',     category: 'play'    },
+    { id: 'ball',     name: 'ball',     request: 'my ball',       image: 'item_ball',     audio: 'request_ball',     category: 'play'    },
+    { id: 'blocks',   name: 'blocks',   request: 'my blocks',     image: 'item_blocks',   audio: 'request_blocks',   category: 'play'    },
+    { id: 'car',      name: 'toy car',  request: 'my toy car',    image: 'item_car',      audio: 'request_car',      category: 'play'    },
+];
