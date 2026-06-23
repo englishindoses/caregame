@@ -32,8 +32,7 @@ class BootScene extends Phaser.Scene {
             this.load.audio(key, `assets/audio/${key}.mp3`);
         });
         this.load.audio(PHRASES.allDone, `assets/audio/${PHRASES.allDone}.mp3`);
-        CHARACTERS.forEach(char => {
-            const key = PHRASES.chosen[char.id];
+        PHRASES.chosen.forEach(key => {
             this.load.audio(key, `assets/audio/${key}.mp3`);
         });
     }
