@@ -476,11 +476,25 @@ class PlayScene extends Phaser.Scene {
 
         const idx = this.trayObjects.indexOf(obj);
         if (idx !== -1 && this.trayLabels[idx]) this.trayLabels[idx].setVisible(false);
-        obj.setVisible(false);
 
         const cat = obj.itemData.category;
-        this.setCharEmotion(cat === 'sleep' ? 'sleeping' : 'happy');
-        if (cat !== 'sleep') this.celebrateChar();
+        if (cat === 'food' || cat === 'drink') {
+            obj.setVisible(false);
+        } else {
+            this.input.setDraggable(obj, false);
+            this.time.delayedCall(1000, () => obj.setVisible(false));
+        }
+
+        if (cat === 'sleep') {
+            this.setCharEmotion('sleeping');
+        } else if (cat === 'play' && Math.random() < 0.7) {
+            this.setCharEmotion('play');
+            this.celebrateChar();
+        } else {
+            this.setCharEmotion('happy');
+            this.celebrateChar();
+        }
+
         let thankYouPool;
         if (cat === 'food' || cat === 'drink') {
             thankYouPool = [...PHRASES.thankYou, ...PHRASES.thankYouFood];
@@ -493,7 +507,7 @@ class PlayScene extends Phaser.Scene {
         }
         this.queueAudio(Phaser.Utils.Array.GetRandom(thankYouPool));
 
-        const remaining = this.trayObjects.filter(o => o.visible);
+        const remaining = this.trayObjects.filter(o => !o.correctHandled);
 
         if (remaining.length === 0) {
             this.requestText.setText('');

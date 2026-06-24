@@ -25,6 +25,7 @@ class BootScene extends Phaser.Scene {
 
         this.load.image('dolly_sleepy',   'assets/images/dolly_sleepy.png');
         this.load.image('dolly_sleeping', 'assets/images/dolly_sleeping.png');
+        this.load.image('dolly_play',     'assets/images/dolly_play.png');
 
         ITEMS.forEach(item => {
             this.load.image(item.image, `assets/images/${item.image}.png`);
