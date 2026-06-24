@@ -450,6 +450,7 @@ class PlayScene extends Phaser.Scene {
         this.setCharEmotion(Math.random() < NEEDY_CHANCE ? 'needy' : 'neutral');
 
         if (this.currentRequest.category === 'sleep' && Math.random() < 0.5) {
+            this.setCharEmotion('sleepy');
             this.interruptAudio(Phaser.Utils.Array.GetRandom(PHRASES.sleepy));
             this.queueAudio(this.currentRequest.audio);
         } else {
@@ -477,9 +478,9 @@ class PlayScene extends Phaser.Scene {
         if (idx !== -1 && this.trayLabels[idx]) this.trayLabels[idx].setVisible(false);
         obj.setVisible(false);
 
-        this.setCharEmotion('happy');
-        this.celebrateChar();
         const cat = obj.itemData.category;
+        this.setCharEmotion(cat === 'sleep' ? 'sleeping' : 'happy');
+        this.celebrateChar();
         let thankYouPool;
         if (cat === 'food' || cat === 'drink') {
             thankYouPool = [...PHRASES.thankYou, ...PHRASES.thankYouFood];
