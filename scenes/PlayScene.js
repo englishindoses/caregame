@@ -473,7 +473,11 @@ class PlayScene extends Phaser.Scene {
 
         this.setCharEmotion('happy');
         this.celebrateChar();
-        this.queueAudio(Phaser.Utils.Array.GetRandom(PHRASES.thankYou));
+        const isFood = obj.itemData.category === 'food';
+        const thankYouPool = isFood
+            ? [...PHRASES.thankYou, ...PHRASES.thankYouFood]
+            : PHRASES.thankYou;
+        this.queueAudio(Phaser.Utils.Array.GetRandom(thankYouPool));
 
         const remaining = this.trayObjects.filter(o => o.visible);
 

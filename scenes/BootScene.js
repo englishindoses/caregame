@@ -31,6 +31,9 @@ class BootScene extends Phaser.Scene {
         PHRASES.thankYou.forEach(key => {
             this.load.audio(key, `assets/audio/${key}.mp3`);
         });
+        PHRASES.thankYouFood.forEach(key => {
+            this.load.audio(key, `assets/audio/${key}.mp3`);
+        });
         this.load.audio(PHRASES.allDone, `assets/audio/${PHRASES.allDone}.mp3`);
         PHRASES.chosen.forEach(key => {
             this.load.audio(key, `assets/audio/${key}.mp3`);

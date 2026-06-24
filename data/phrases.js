@@ -1,6 +1,7 @@
 const PHRASES = {
-    thankYou:   ['thank_you_1', 'thank_you_2', 'thank_you_3', 'thank_you_4'],
-    allDone:    'all_done',
+    thankYou:     ['thank_you_1', 'thank_you_2', 'thank_you_3', 'thank_you_4'],
+    thankYouFood: [],   // food-specific phrases — add keys here and matching MP3s to assets/audio/
+    allDone:      'all_done',
     chosen:     ['chosen', 'chosen_2', 'chosen_3'],
     _chosenIdx: 0,
     nextChosen() {
