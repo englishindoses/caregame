@@ -28,10 +28,14 @@ class BootScene extends Phaser.Scene {
             this.load.audio(item.audio, `assets/audio/${item.audio}.mp3`);
         });
 
-        PHRASES.thankYou.forEach(key => {
-            this.load.audio(key, `assets/audio/${key}.mp3`);
-        });
-        PHRASES.thankYouFood.forEach(key => {
+        [
+            ...PHRASES.thankYou,
+            ...PHRASES.thankYouFood,
+            ...PHRASES.thankYouComfy,
+            ...PHRASES.thankYouToys,
+            ...PHRASES.wrong,
+            ...PHRASES.sleepy,
+        ].forEach(key => {
             this.load.audio(key, `assets/audio/${key}.mp3`);
         });
         this.load.audio(PHRASES.allDone, `assets/audio/${PHRASES.allDone}.mp3`);

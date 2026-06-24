@@ -448,7 +448,13 @@ class PlayScene extends Phaser.Scene {
         this.requestText.setText(displayName);
         const NEEDY_CHANCE = 0.4;
         this.setCharEmotion(Math.random() < NEEDY_CHANCE ? 'needy' : 'neutral');
-        this.interruptAudio(this.currentRequest.audio);
+
+        if (this.currentRequest.category === 'sleep' && Math.random() < 0.5) {
+            this.interruptAudio(Phaser.Utils.Array.GetRandom(PHRASES.sleepy));
+            this.queueAudio(this.currentRequest.audio);
+        } else {
+            this.interruptAudio(this.currentRequest.audio);
+        }
     }
 
     // ── Correct ───────────────────────────────────────────────────────────────
@@ -473,10 +479,17 @@ class PlayScene extends Phaser.Scene {
 
         this.setCharEmotion('happy');
         this.celebrateChar();
-        const isFood = obj.itemData.category === 'food';
-        const thankYouPool = isFood
-            ? [...PHRASES.thankYou, ...PHRASES.thankYouFood]
-            : PHRASES.thankYou;
+        const cat = obj.itemData.category;
+        let thankYouPool;
+        if (cat === 'food' || cat === 'drink') {
+            thankYouPool = [...PHRASES.thankYou, ...PHRASES.thankYouFood];
+        } else if (cat === 'sleep' || cat === 'comfort') {
+            thankYouPool = [...PHRASES.thankYou, ...PHRASES.thankYouComfy];
+        } else if (cat === 'play') {
+            thankYouPool = [...PHRASES.thankYou, ...PHRASES.thankYouToys];
+        } else {
+            thankYouPool = PHRASES.thankYou;
+        }
         this.queueAudio(Phaser.Utils.Array.GetRandom(thankYouPool));
 
         const remaining = this.trayObjects.filter(o => o.visible);
@@ -504,6 +517,8 @@ class PlayScene extends Phaser.Scene {
             this.showHint();
         } else if (this.wrongCount >= 2) {
             this.interruptAudio(this.currentRequest.audio);
+        } else {
+            this.interruptAudio(Phaser.Utils.Array.GetRandom(PHRASES.wrong));
         }
     }
 
