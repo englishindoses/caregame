@@ -480,7 +480,7 @@ class PlayScene extends Phaser.Scene {
 
         const cat = obj.itemData.category;
         this.setCharEmotion(cat === 'sleep' ? 'sleeping' : 'happy');
-        this.celebrateChar();
+        if (cat !== 'sleep') this.celebrateChar();
         let thankYouPool;
         if (cat === 'food' || cat === 'drink') {
             thankYouPool = [...PHRASES.thankYou, ...PHRASES.thankYouFood];
