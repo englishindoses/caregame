@@ -54,7 +54,7 @@ Loads all assets with a simple progress bar. If a character is saved in `localSt
 - Two small non-active character thumbnails stacked in the top-left corner — tap to switch character mid-game.
 - Tray of 3 items along the bottom, evenly spaced.
 - Request text above the character: just the item name (e.g. "Banana") in large white text with black outline.
-- Hidden long-press zone in top-right corner (100×100px) for parent menu.
+- Small door icon in the top-right corner — long-press (2s) to return to SelectScene.
 
 **Game loop:**
 1. On first arrival from SelectScene: character shown with no tray, chosen audio plays; tray loads after audio finishes.
@@ -62,27 +62,29 @@ Loads all assets with a simple progress bar. If a character is saved in `localSt
 3. A random tray item is chosen as the request. Request audio plays immediately (interrupts any prior audio). Character switches to neutral or needy (40% chance of needy).
 4. Child drags an item from the tray onto the character.
 5. **Correct**:
+   - `currentRequest` cleared immediately so no further drags register during audio.
    - Character switches to `happy` face.
-   - Plays a random thank-you audio (4 variants).
+   - Plays a random thank-you audio (4 variants). Drags locked throughout.
    - Celebration bounce animation.
    - Item disappears from tray.
-   - After thank-you audio finishes, next request is picked from remaining tray items.
-6. **Wrong**:
+   - After thank-you audio finishes, next request is picked and its audio plays (drags locked until it finishes).
+6. **Wrong (1st time)**:
    - Item tweens back to its tray position.
    - Wrong-counter increments.
    - Character switches to needy.
-   - Request audio replays immediately (interrupts current audio — no stale queue build-up).
-7. **After 3 wrong tries on the same request**:
+   - No audio — drags remain open immediately.
+7. **Wrong (2nd time)**:
+   - Same as above, then request audio replays immediately. Drags locked until it finishes.
+8. **After 3 wrong tries on the same request**:
    - Yellow glow pulses behind the correct item.
    - Correct item wiggles continuously.
    - Next tap or drag on that item counts as correct and triggers full celebration.
 8. Tray empty → all-done audio plays (character stays happy). When audio finishes, character switches to neutral, brief pause, new tray deals. Loop continues.
 
-**Parent menu (long-press, 2s hold):**
-- Subtle arc draws in the top-right corner during the hold.
-- Opens a panel with: Mute/Unmute, Change character, Exit.
-- Mute state persisted in `localStorage`.
-- Tapping the dim overlay dismisses the menu.
+**Door button (long-press, 2s hold):**
+- Small semi-transparent door icon in the top-right corner.
+- Subtle arc draws around it during the hold.
+- On completion, clears saved character and goes straight to SelectScene.
 
 ## Item randomisation ✓
 
@@ -133,7 +135,7 @@ const PHRASES = {
 5. **Emotions and animations** — swap character textures (neutral/needy/happy), idle bounce, celebration bounce. ✓
 6. **Character select scene** — characters.js, SelectScene UI, pass chosen ID to PlayScene, localStorage persistence. ✓
 7. **Audio** — load MP3s in BootScene, audio queue (handles iOS Web Audio unlock), request/thank-you/all-done/chosen audio. ✓
-8. **Polish** — Scale.FIT responsiveness, long-press parent menu (mute/change character/exit), all assets complete. ✓
+8. **Polish** — Scale.FIT responsiveness, door button (long-press to return to SelectScene), all assets complete. ✓
 
 ## Testing notes
 
