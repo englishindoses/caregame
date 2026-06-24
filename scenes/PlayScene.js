@@ -34,7 +34,6 @@ class PlayScene extends Phaser.Scene {
         this.currentRequest = null;
         this.wrongCount     = 0;
         this.idleTween      = null;
-        this._menuOpen      = false;
 
         this.buildStaticUI();
         this.setupDragEvents();
@@ -86,7 +85,7 @@ class PlayScene extends Phaser.Scene {
         }
         this.charSprite.setDepth(5);
 
-        this.addParentZone();
+        this.addDoorButton();
         this.buildCharacterSwitcher();
         this.startIdle();
 
@@ -206,32 +205,46 @@ class PlayScene extends Phaser.Scene {
         snd.play();
     }
 
-    // ── Parent menu ───────────────────────────────────────────────────────────
+    // ── Door button ───────────────────────────────────────────────────────────
     //
-    // Hidden 100×100 zone in the top-right corner. Hold for 2 seconds to open
-    // the parent menu. A subtle arc draws during the hold so a parent can see
-    // it's registering without it being obvious to a child.
+    // Small door icon in the top-right corner. Hold for 2 seconds to go back
+    // to the character select screen. The arc that draws during the hold gives
+    // parents subtle feedback without attracting a child's attention.
 
-    addParentZone() {
-        const { W }  = this;
-        const ZX     = W - 50;
-        const ZY     = 50;
-        const zone   = this.add.zone(ZX, ZY, 100, 100).setDepth(30).setInteractive();
+    addDoorButton() {
+        const { W } = this;
+        const ZX = W - 50;
+        const ZY = 50;
+
+        // Draw door icon
+        const dW = 36, dH = 50;
+        const dX = ZX - dW / 2;
+        const dY = ZY - dH / 2;
+
+        const icon = this.add.graphics().setDepth(30);
+        icon.fillStyle(0xFFFFFF, 0.18);
+        icon.fillRoundedRect(dX, dY, dW, dH, 5);
+        icon.lineStyle(2.5, 0xFFFFFF, 0.65);
+        icon.strokeRoundedRect(dX, dY, dW, dH, 5);
+        // doorknob on the left side
+        icon.fillStyle(0xFFFFFF, 0.8);
+        icon.fillCircle(ZX - 8, ZY + 3, 3.5);
+
+        const zone = this.add.zone(ZX, ZY, 100, 100).setDepth(31).setInteractive();
 
         let arcGfx  = null;
         let arcObj  = null;
         let arcTween = null;
 
         const cancelHold = () => {
-            if (arcTween)  { arcTween.stop();    arcTween = null; }
-            if (arcGfx)    { arcGfx.destroy();   arcGfx = null; }
+            if (arcTween) { arcTween.stop();  arcTween = null; }
+            if (arcGfx)   { arcGfx.destroy(); arcGfx = null; }
             arcObj = null;
         };
 
         zone.on('pointerdown', () => {
-            if (this._menuOpen) return;
             arcObj  = { t: 0 };
-            arcGfx  = this.add.graphics().setDepth(31);
+            arcGfx  = this.add.graphics().setDepth(32);
             arcTween = this.tweens.add({
                 targets:  arcObj,
                 t:        1,
@@ -241,7 +254,7 @@ class PlayScene extends Phaser.Scene {
                     arcGfx.clear();
                     arcGfx.lineStyle(4, 0xFFFFFF, 0.75);
                     arcGfx.beginPath();
-                    arcGfx.arc(ZX, ZY, 22, -Math.PI / 2,
+                    arcGfx.arc(ZX, ZY, 26, -Math.PI / 2,
                         -Math.PI / 2 + Math.PI * 2 * arcObj.t, false);
                     arcGfx.strokePath();
                 },
@@ -249,96 +262,12 @@ class PlayScene extends Phaser.Scene {
                     this.input.off('pointerup', cancelHold);
                     arcGfx.destroy(); arcGfx = null;
                     arcTween = null;
-                    this._menuOpen = true;
-                    this.showParentMenu();
+                    localStorage.removeItem('tcm_character');
+                    this.scene.start('SelectScene');
                 },
             });
             this.input.once('pointerup', cancelHold);
         });
-    }
-
-    showParentMenu() {
-        const { W, H } = this;
-        const els = [];
-
-        const dismiss = () => {
-            this._menuOpen = false;
-            els.forEach(e => { if (e && e.destroy) e.destroy(); });
-        };
-
-        // Dim overlay — tapping it dismisses the menu
-        const overlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.45)
-            .setDepth(50).setInteractive();
-        overlay.on('pointerdown', dismiss);
-        els.push(overlay);
-
-        // Panel dimensions
-        const PW = 340, BTN_H = 80, PAD = 24;
-        const PH = PAD + BTN_H * 3 + PAD;
-        const PX = W - PAD - PW;
-        const PY = PAD;
-
-        const panelGfx = this.add.graphics().setDepth(51);
-        panelGfx.fillStyle(0xFFFAF5, 1);
-        panelGfx.fillRoundedRect(PX, PY, PW, PH, 18);
-        panelGfx.lineStyle(2, 0xDDD0C0, 1);
-        panelGfx.strokeRoundedRect(PX, PY, PW, PH, 18);
-        els.push(panelGfx);
-
-        const btnDefs = [
-            { label: this.sound.mute ? 'Unmute' : 'Mute', id: 'mute' },
-            { label: 'Change character',                    id: 'change' },
-            { label: 'Exit',                                id: 'exit' },
-        ];
-
-        btnDefs.forEach((def, i) => {
-            const bx    = PX + PW / 2;
-            const by    = PY + PAD + BTN_H * i + BTN_H / 2;
-            const bw    = PW - 20;
-            const bh    = BTN_H - 12;
-            const bLeft = PX + 10;
-            const bTop  = by - bh / 2;
-
-            const isMuteActive = def.id === 'mute' && this.sound.mute;
-            const btnGfx = this.add.graphics().setDepth(52);
-            const drawBtn = (color) => {
-                btnGfx.clear();
-                btnGfx.fillStyle(color, 1);
-                btnGfx.fillRoundedRect(bLeft, bTop, bw, bh, 12);
-            };
-            drawBtn(isMuteActive ? 0xDDE0FF : 0xF0E8DF);
-            els.push(btnGfx);
-
-            const txt = this.add.text(bx, by, def.label, {
-                fontFamily: 'Arial, sans-serif',
-                fontSize:   '36px',
-                color:      '#5A3A2A',
-            }).setOrigin(0.5).setDepth(54);
-            els.push(txt);
-
-            const hit = this.add.zone(bx, by, bw, bh).setDepth(53).setInteractive();
-            els.push(hit);
-
-            hit.on('pointerdown', () => {
-                if (def.id === 'mute') {
-                    this.sound.mute = !this.sound.mute;
-                    localStorage.setItem('tcm_mute', this.sound.mute ? '1' : '0');
-                    txt.setText(this.sound.mute ? 'Unmute' : 'Mute');
-                    drawBtn(this.sound.mute ? 0xDDE0FF : 0xF0E8DF);
-                } else if (def.id === 'change') {
-                    dismiss();
-                    localStorage.removeItem('tcm_character');
-                    this.scene.start('SelectScene');
-                } else {
-                    dismiss();
-                    window.close();
-                }
-            });
-        });
-
-        // Fade the whole menu in
-        els.forEach(e => { if (e.setAlpha) e.setAlpha(0); });
-        this.tweens.add({ targets: els, alpha: 1, duration: 150 });
     }
 
     // ── Character animation ──────────────────────────────────────────────────
