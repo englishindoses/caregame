@@ -141,6 +141,7 @@ class PlayScene extends Phaser.Scene {
     setupAudioQueue() {
         this._queue        = [];
         this._busy         = false;
+        this._inputLocked  = false;
         this._currentSound = null;
 
         if (this.sound.locked) {
@@ -148,8 +149,9 @@ class PlayScene extends Phaser.Scene {
         }
 
         this.events.once('shutdown', () => {
-            this._queue = [];
-            this._busy  = false;
+            this._queue       = [];
+            this._busy        = false;
+            this._inputLocked = false;
             if (this._currentSound) {
                 this._currentSound.stop();
                 this._currentSound.destroy();
@@ -184,15 +186,16 @@ class PlayScene extends Phaser.Scene {
     }
 
     _nextAudio() {
-        if (this._queue.length === 0) { this._busy = false; return; }
-        this._busy    = true;
-        const item    = this._queue.shift();
+        if (this._queue.length === 0) { this._busy = false; this._inputLocked = false; return; }
+        this._busy = true;
+        const item = this._queue.shift();
         if (typeof item === 'function') {
             this._busy = false;
             item();
-            this._nextAudio();
+            if (!this._busy) this._nextAudio();
             return;
         }
+        this._inputLocked = true;
         const snd = this.sound.add(item);
         this._currentSound = snd;
         snd.once('complete', () => {
@@ -402,6 +405,11 @@ class PlayScene extends Phaser.Scene {
         });
 
         this.input.on('dragend', (_pointer, obj) => {
+            if (this._inputLocked || !this.currentRequest) {
+                this.returnToHome(obj);
+                return;
+            }
+
             if (obj.isHinted) {
                 this.handleCorrect(obj);
                 return;
@@ -520,6 +528,8 @@ class PlayScene extends Phaser.Scene {
         if (obj.correctHandled) return;
         obj.correctHandled = true;
 
+        this.currentRequest = null;
+
         this.tweens.killTweensOf(obj);
         obj.setAngle(0);
         if (obj.glowObject) {
@@ -556,10 +566,11 @@ class PlayScene extends Phaser.Scene {
         this.wrongCount++;
         this.setCharEmotion('needy');
         this.returnToHome(obj);
-        this.interruptAudio(this.currentRequest.audio);
 
         if (this.wrongCount >= 3) {
             this.showHint();
+        } else if (this.wrongCount >= 2) {
+            this.interruptAudio(this.currentRequest.audio);
         }
     }
 
