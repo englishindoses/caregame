@@ -43,9 +43,10 @@ class PlayScene extends Phaser.Scene {
 
         if (this.fromSelect) {
             this.queueAudio(PHRASES.nextChosen());
+            this.queueThen(() => this.loadNextTray());
+        } else {
+            this.loadNextTray();
         }
-
-        this.loadNextTray();
     }
 
     // ── Static UI ────────────────────────────────────────────────────────────
@@ -61,12 +62,12 @@ class PlayScene extends Phaser.Scene {
 
         this.requestText = this.add.text(W / 2, H * 0.10, '', {
             fontFamily: 'Arial, sans-serif',
-            fontSize:   '44px',
-            color:      '#5A3A2A',
+            fontSize:   '72px',
+            color:      '#ffffff',
             align:      'center',
             wordWrap:   { width: W - 80 },
-            stroke:     '#ffffff',
-            strokeThickness: 4,
+            stroke:     '#000000',
+            strokeThickness: 8,
         }).setOrigin(0.5).setDepth(10);
 
         this.charX = W / 2;
@@ -86,8 +87,48 @@ class PlayScene extends Phaser.Scene {
         this.charSprite.setDepth(5);
 
         this.addParentZone();
+        this.buildCharacterSwitcher();
         this.startIdle();
 
+    }
+
+    // ── Character switcher ───────────────────────────────────────────────────
+
+    buildCharacterSwitcher() {
+        if (this._switcherBgs)    this._switcherBgs.forEach(o => o.destroy());
+        if (this._switcherImgs)   this._switcherImgs.forEach(o => o.destroy());
+        this._switcherBgs  = [];
+        this._switcherImgs = [];
+
+        const SIZE = Math.round(this.W * 0.14);
+        const PAD  = 10;
+        const cx   = PAD + SIZE / 2;
+
+        CHARACTERS.filter(c => c.id !== this.characterId).forEach((char, i) => {
+            const cy  = PAD + SIZE / 2 + i * (SIZE + PAD);
+            const key = char.neutral;
+
+            const bg = this.add.circle(cx, cy, SIZE / 2 + 6, 0xFFFFFF, 0.55).setDepth(19);
+            this._switcherBgs.push(bg);
+
+            let img;
+            if (this.textures.exists(key)) {
+                img = this.add.image(cx, cy, key);
+                img.setScale(SIZE / Math.max(img.width, img.height));
+            } else {
+                img = this.add.circle(cx, cy, SIZE / 2, char.color);
+            }
+            img.setDepth(20).setInteractive();
+
+            img.on('pointerdown', () => {
+                this.characterId = char.id;
+                localStorage.setItem('tcm_character', this.characterId);
+                this.setCharEmotion('neutral');
+                this.buildCharacterSwitcher();
+            });
+
+            this._switcherImgs.push(img);
+        });
     }
 
     // ── Audio queue ──────────────────────────────────────────────────────────
@@ -123,11 +164,36 @@ class PlayScene extends Phaser.Scene {
         if (!this._busy && !this.sound.locked) this._nextAudio();
     }
 
+    interruptAudio(key) {
+        if (!key || !this.cache.audio.exists(key)) return;
+        if (this._currentSound) {
+            this._currentSound.off('complete');
+            this._currentSound.stop();
+            this._currentSound.destroy();
+            this._currentSound = null;
+        }
+        this._queue = [];
+        this._busy  = false;
+        this._queue.push(key);
+        if (!this.sound.locked) this._nextAudio();
+    }
+
+    queueThen(fn) {
+        this._queue.push(fn);
+        if (!this._busy && !this.sound.locked) this._nextAudio();
+    }
+
     _nextAudio() {
         if (this._queue.length === 0) { this._busy = false; return; }
-        this._busy = true;
-        const key  = this._queue.shift();
-        const snd  = this.sound.add(key);
+        this._busy    = true;
+        const item    = this._queue.shift();
+        if (typeof item === 'function') {
+            this._busy = false;
+            item();
+            this._nextAudio();
+            return;
+        }
+        const snd = this.sound.add(item);
         this._currentSound = snd;
         snd.once('complete', () => {
             snd.destroy();
@@ -441,10 +507,11 @@ class PlayScene extends Phaser.Scene {
         this.wrongCount     = 0;
         const chosen        = Phaser.Utils.Array.GetRandom(active);
         this.currentRequest = chosen.itemData;
-        this.requestText.setText(`Can I have ${this.currentRequest.request}, please?`);
+        const displayName   = this.currentRequest.name.charAt(0).toUpperCase() + this.currentRequest.name.slice(1);
+        this.requestText.setText(displayName);
         const NEEDY_CHANCE = 0.4;
         this.setCharEmotion(Math.random() < NEEDY_CHANCE ? 'needy' : 'neutral');
-        this.queueAudio(this.currentRequest.audio);
+        this.interruptAudio(this.currentRequest.audio);
     }
 
     // ── Correct ───────────────────────────────────────────────────────────────
@@ -472,11 +539,14 @@ class PlayScene extends Phaser.Scene {
         const remaining = this.trayObjects.filter(o => o.visible);
 
         if (remaining.length === 0) {
-            this.requestText.setText('All done! Well done!');
+            this.requestText.setText('');
             this.queueAudio(PHRASES.allDone);
-            this.time.delayedCall(1400, () => this.loadNextTray());
+            this.queueThen(() => {
+                this.setCharEmotion('neutral');
+                this.time.delayedCall(400, () => this.loadNextTray());
+            });
         } else {
-            this.time.delayedCall(700, () => this.pickRequest());
+            this.queueThen(() => this.pickRequest());
         }
     }
 
@@ -486,7 +556,7 @@ class PlayScene extends Phaser.Scene {
         this.wrongCount++;
         this.setCharEmotion('needy');
         this.returnToHome(obj);
-        this.queueAudio(this.currentRequest.audio);
+        this.interruptAudio(this.currentRequest.audio);
 
         if (this.wrongCount >= 3) {
             this.showHint();

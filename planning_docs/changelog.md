@@ -23,6 +23,25 @@ The original items.js had no `request` field — the request text was assembled 
 
 ---
 
+## 2026-06-23 — Gameplay and audio improvements
+
+**Character switcher added to PlayScene**
+Two small thumbnails of the non-active characters now appear in the top-left corner, stacked vertically. Children can tap them to switch character mid-game without needing the parent menu. The switcher rebuilds itself whenever the active character changes.
+
+**Request text: full sentence → item name only**
+The request text changed from "Can I have a banana, please?" to just "Banana". Kids can't read full sentences but can start to recognise individual words. Font increased to 72px, colour changed to white with a black outline for readability over the background.
+
+**Two-tier audio system to fix queue pile-up**
+Request audio (initial and wrong-answer replay) now uses `interruptAudio()` — stops whatever is playing, clears the queue, and plays immediately. Thank-you and all-done audio use `queueAudio()` / `queueThen()` as before. This prevents stale request audio from bleeding into the next round when a child answers quickly or makes repeated wrong attempts.
+
+**Tray-end pause sequence**
+When all tray items are given: character stays happy while all-done audio plays to completion, then switches to neutral, brief 400ms pause, then the next tray loads. Previously the tray loaded on a fixed 1400ms timer regardless of audio length.
+
+**Character intro sequence**
+When arriving from SelectScene, the tray no longer loads immediately. The character is shown on a neutral face with no items while the chosen audio plays; the tray loads only after the audio finishes.
+
+---
+
 ## 2026-06-23 — Repo restructure
 
 **Moved repo root from `game-creation/` to `game/`**

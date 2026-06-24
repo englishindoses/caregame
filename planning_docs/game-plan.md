@@ -51,30 +51,32 @@ Loads all assets with a simple progress bar. If a character is saved in `localSt
 **Layout:**
 - Cozy bedroom background.
 - Chosen character centred in the upper portion of the screen.
+- Two small non-active character thumbnails stacked in the top-left corner — tap to switch character mid-game.
 - Tray of 3 items along the bottom, evenly spaced.
-- Request text above the character: "Can I have [request], please?"
+- Request text above the character: just the item name (e.g. "Banana") in large white text with black outline.
 - Hidden long-press zone in top-right corner (100×100px) for parent menu.
 
 **Game loop:**
-1. Tray populated with 3 items from the deck.
-2. A random tray item is chosen as the request. Request audio plays. Character switches to neutral or needy (40% chance of needy).
-3. Child drags an item from the tray onto the character.
-4. **Correct**:
+1. On first arrival from SelectScene: character shown with no tray, chosen audio plays; tray loads after audio finishes.
+2. Tray populated with 3 items from the deck.
+3. A random tray item is chosen as the request. Request audio plays immediately (interrupts any prior audio). Character switches to neutral or needy (40% chance of needy).
+4. Child drags an item from the tray onto the character.
+5. **Correct**:
    - Character switches to `happy` face.
    - Plays a random thank-you audio (4 variants).
    - Celebration bounce animation.
    - Item disappears from tray.
-   - After 700ms, next request picked from remaining tray items.
-5. **Wrong**:
+   - After thank-you audio finishes, next request is picked from remaining tray items.
+6. **Wrong**:
    - Item tweens back to its tray position.
    - Wrong-counter increments.
    - Character switches to needy.
-   - Request audio repeats.
-6. **After 3 wrong tries on the same request**:
+   - Request audio replays immediately (interrupts current audio — no stale queue build-up).
+7. **After 3 wrong tries on the same request**:
    - Yellow glow pulses behind the correct item.
    - Correct item wiggles continuously.
    - Next tap or drag on that item counts as correct and triggers full celebration.
-7. Tray empty → "All done! Well done!" text, all-done audio plays, new tray dealt after 1400ms. Loop continues.
+8. Tray empty → all-done audio plays (character stays happy). When audio finishes, character switches to neutral, brief pause, new tray deals. Loop continues.
 
 **Parent menu (long-press, 2s hold):**
 - Subtle arc draws in the top-right corner during the hold.

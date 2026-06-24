@@ -66,15 +66,22 @@ Open on a phone or phone-emulator in the browser. Desktop works for development 
 **Item randomisation:** shuffled-deck approach — all 15 items shuffled at game start, dealt 3 at a time. Reshuffle when all 15 have been seen.
 
 **Game loop (PlayScene):**
-1. Deal 3 items from the deck into the tray
-2. Pick a random tray item as the request; play its audio; show request text; set character to neutral or needy (40% needy)
-3. Child drags an item onto the character
-4. Correct → hide item, play thank-you, celebrate (character bounce + happy emotion), then pick next request after 700ms
-5. Wrong → tween item back to tray, increment wrong counter, repeat request audio, set character to needy
-6. 3 wrong tries → yellow glow pulse + wiggle tween on the correct item; next tap or drag on that item counts as correct
-7. Tray empty → "All done! Well done!", play all-done audio, load next tray after 1400ms
+1. If arriving from SelectScene (`fromSelect: true`): show character on neutral face with no tray; play chosen audio; when it finishes, load the first tray.
+2. Deal 3 items from the deck into the tray.
+3. Pick a random tray item as the request; play its audio immediately (interrupts any prior audio); show just the item name (e.g. "Banana") in large white text with black outline; set character to neutral or needy (40% needy).
+4. Child drags an item onto the character.
+5. Correct → hide item, set character to happy, play thank-you audio, celebrate (character bounce). When thank-you finishes, pick next request.
+6. Wrong → tween item back to tray, increment wrong counter, set character to needy, replay request audio immediately (interrupting).
+7. 3 wrong tries → yellow glow pulse + wiggle tween on the correct item; next tap or drag on that item counts as correct.
+8. Tray empty → play all-done audio (character stays happy). When it finishes, switch to neutral, brief pause, then deal next tray.
 
-**Audio queue:** Mobile browsers (especially iOS) block Web Audio until the first user gesture. Phaser resumes the AudioContext on first touch and emits `unlocked`. The queue holds audio keys while locked and drains automatically once unlocked. Sounds play sequentially; never overlap.
+**Audio system — two-tier:**
+- `interruptAudio(key)` — stops the current sound, clears the queue, plays `key` immediately. Used for request audio (initial and wrong-answer replay) so stale audio never accumulates.
+- `queueAudio(key)` — appends to the queue; plays when prior sounds finish. Used for thank-you and all-done audio.
+- `queueThen(fn)` — appends a callback to the queue; fires in sequence after all prior audio has played. Used to chain game-state transitions (next request, tray load) to the end of audio.
+- Mobile browsers (especially iOS) block Web Audio until the first user gesture. Phaser resumes the AudioContext on first touch and emits `unlocked`. The queue drains automatically once unlocked.
+
+**Character switcher:** Two small thumbnails of the non-active characters sit in the top-left corner, stacked vertically. Tapping one switches the active character mid-game (updates `this.characterId`, swaps the sprite texture, saves to `localStorage`, rebuilds the switcher).
 
 **Parent menu:** Hidden 100×100 zone in the top-right corner. Hold for 2 seconds — a subtle arc draws during the hold. On completion, opens a panel with:
 - **Mute / Unmute** — persisted in `localStorage`
