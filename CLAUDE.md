@@ -24,7 +24,8 @@ Open on a phone or phone-emulator in the browser. Desktop works for development 
 - **Vanilla JS** — plain `<script>` tags loaded in order, no ES modules, no `import`/`export`
 - Everything on the **global scope** — scenes, data constants, etc.
 - **720 × 1280** reference resolution, portrait, `Scale.FIT` mode
-- Assets: PNG (transparent bg for characters/items) and MP3
+- Assets: WebP (converted images) with PNG fallback for unconverted images; MP3 audio
+- **PWA** — `manifest.json` + `sw.js` service worker; installable on Android/iOS, works offline
 
 ## File structure
 
@@ -32,6 +33,8 @@ Open on a phone or phone-emulator in the browser. Desktop works for development 
 /                           ← repo root
   index.html                ← Phaser CDN + script tags in load order
   main.js                   ← Phaser config, scale settings, scene list
+  manifest.json             ← PWA manifest (name, icons, display, orientation)
+  sw.js                     ← service worker (pre-caches all assets for offline play)
   CLAUDE.md                 ← this file
   /scenes
     BootScene.js            ← loads all assets, progress bar, skips SelectScene if character saved
@@ -40,10 +43,10 @@ Open on a phone or phone-emulator in the browser. Desktop works for development 
   /data
     items.js                ← ITEMS array (15 items)
     characters.js           ← CHARACTERS array (3 characters × 3 emotion image keys)
-    phrases.js              ← PHRASES object (thankYou variants, allDone, chosen)
+    phrases.js              ← PHRASES object (category thank-you arrays, wrong, sleepy, allDone, chosen)
   /assets
-    /images                 ← 25 PNGs (see Asset reference below)
-    /audio                  ← 23 MP3s (see Asset reference below)
+    /images                 ← 28 images: 7 WebP + 21 PNG (see Asset reference below)
+    /audio                  ← 37 MP3s (see Asset reference below)
   /planning_docs            ← reference docs only, not part of the game
     game-plan.md
     assets-to-create.md
@@ -61,7 +64,7 @@ Open on a phone or phone-emulator in the browser. Desktop works for development 
 **Data conventions:**
 - `ITEMS` — 15 items, each `{ id, name, request, image, audio, category }`
 - `CHARACTERS` — 3 characters, each `{ id, name, color, neutral, needy, happy }` (values are image keys)
-- `PHRASES` — `{ thankYou: [4 keys], allDone: key, chosen: [3 keys], nextChosen() }`. `nextChosen()` cycles through chosen keys in order (not random).
+- `PHRASES` — `{ thankYou, thankYouFood, thankYouComfy, thankYouToys, wrong, sleepy, allDone, chosen, nextChosen() }`. Category-specific thank-you arrays are selected based on the item's `category` field. `wrong` and `sleepy` arrays are used for wrong-answer and sleep-item preamble audio. `nextChosen()` cycles through chosen keys in order (not random).
 
 **Item randomisation:** shuffled-deck approach — all 15 items shuffled at game start, dealt 3 at a time. Reshuffle when all 15 have been seen.
 
@@ -91,28 +94,41 @@ Open on a phone or phone-emulator in the browser. Desktop works for development 
 
 ## Asset reference
 
-**25 images** in `assets/images/`:
-- `bg_room.png`
-- `dolly_neutral.png`, `dolly_needy.png`, `dolly_happy.png`
+**28 images** in `assets/images/` (WebP where converted, PNG otherwise — BootScene selects automatically):
+
+WebP: `bg_room.webp`, `dolly_neutral.webp`, `dolly_needy.webp`, `bunny_neutral.webp`, `bunny_needy.webp`, `bunny_happy.webp`, `item_apple.webp`
+
+PNG:
+- `dolly_happy.png`, `dolly_sleepy.png`, `dolly_sleeping.png`, `dolly_jumping.png`
 - `giraffe_neutral.png`, `giraffe_needy.png`, `giraffe_happy.png`
-- `bunny_neutral.png`, `bunny_needy.png`, `bunny_happy.png`
-- `item_yogurt.png`, `item_banana.png`, `item_apple.png`, `item_sandwich.png`, `item_biscuit.png`
+- `item_yogurt.png`, `item_banana.png`, `item_sandwich.png`, `item_biscuit.png`
 - `item_water.png`, `item_milk.png`, `item_juice.png`
 - `item_blanket.png`, `item_pillow.png`
 - `item_teddy.png`
 - `item_book.png`, `item_ball.png`, `item_blocks.png`, `item_car.png`
 
-**23 audio files** in `assets/audio/`:
-- `request_yogurt.mp3`, `request_banana.mp3`, `request_apple.mp3`, `request_sandwich.mp3`, `request_biscuit.mp3`
-- `request_water.mp3`, `request_milk.mp3`, `request_juice.mp3`
-- `request_blanket.mp3`, `request_pillow.mp3`
-- `request_teddy.mp3`
-- `request_book.mp3`, `request_ball.mp3`, `request_blocks.mp3`, `request_car.mp3`
-- `thank_you_1.mp3`, `thank_you_2.mp3`, `thank_you_3.mp3`, `thank_you_4.mp3`
-- `all_done.mp3`
-- `chosen.mp3`, `chosen_2.mp3`, `chosen_3.mp3`
+**37 audio files** in `assets/audio/`:
+
+Requests (15): `request_yogurt.mp3`, `request_banana.mp3`, `request_apple.mp3`, `request_sandwich.mp3`, `request_biscuit.mp3`, `request_water.mp3`, `request_milk.mp3`, `request_juice.mp3`, `request_blanket.mp3`, `request_pillow.mp3`, `request_teddy.mp3`, `request_book.mp3`, `request_ball.mp3`, `request_blocks.mp3`, `request_car.mp3`
+
+Thank-yous (12): `thank_you_1–3,5.mp3` (general), `thank_you_food_1–4.mp3`, `thank_you_comfy_1–3.mp3`, `thank_you_toys_1.mp3`
+
+Wrong answers (4): `wrong_1–4.mp3`
+
+Sleep preambles (2): `sleepy_1–2.mp3`
+
+Misc (4): `all_done.mp3`, `chosen.mp3`, `chosen_2.mp3`, `chosen_3.mp3`
 
 All audio is UK English (biscuit, juice, etc.).
+
+## PWA
+
+`manifest.json` and `sw.js` make the game installable as a standalone app and fully playable offline.
+
+- Install on Android: open in Chrome → "Add to Home Screen" banner, or 3-dot menu → "Add to Home Screen"
+- Install on iOS: open in Safari → Share → "Add to Home Screen"
+- **When updating the game:** bump `CACHE_NAME` in `sw.js` (e.g. `tcm-v1` → `tcm-v2`) so the service worker re-caches all assets on next open. No reinstall needed by the user.
+- Icon placeholder: currently uses `dolly_happy.png`. Replace with a proper 512×512 square PNG (character on `#F2E4D4` background) when available.
 
 ## Key constraints
 

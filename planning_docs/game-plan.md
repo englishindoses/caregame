@@ -7,7 +7,7 @@ A touch-based vocabulary game for 3-year-olds. The child chooses a character (Do
 - **Phaser 3.60** (loaded via CDN — no build step needed).
 - **Vanilla JavaScript** — plain script tags loaded in order, no ES modules, no bundler.
 - **Audio**: MP3 files (AI-generated).
-- **Images**: PNG files (generated with ChatGPT).
+- **Images**: WebP (converted assets) with PNG fallback for unconverted images.
 - **Local development**: serve the repo root with `python -m http.server` or `npx serve .`.
 - **Target**: portrait mobile browsers, `Scale.FIT` mode for responsive scaling.
 
@@ -17,6 +17,8 @@ A touch-based vocabulary game for 3-year-olds. The child chooses a character (Do
 /                           ← repo root (game folder is the git root)
   index.html                ← loads Phaser + all scripts in order
   main.js                   ← Phaser config, scale settings, scene list
+  manifest.json             ← PWA manifest
+  sw.js                     ← service worker (offline caching)
   CLAUDE.md
   /scenes
     BootScene.js            ← loads all images and audio, shows loading screen
@@ -27,8 +29,8 @@ A touch-based vocabulary game for 3-year-olds. The child chooses a character (Do
     characters.js           ← all characters (id, name, color, image keys)
     phrases.js              ← shared phrases (thank you variants, all done, chosen)
   /assets
-    /images                 ← 25 PNGs (character emotions, items, background)
-    /audio                  ← 23 MP3s (requests, thank-yous, all-done, chosen)
+    /images                 ← 28 images: 7 WebP + 21 PNG (character emotions, items, background)
+    /audio                  ← 37 MP3s (requests, category thank-yous, wrong, sleepy, all-done, chosen)
   /planning_docs            ← planning docs, not part of the game
 ```
 
@@ -111,9 +113,14 @@ The order of requests within a tray is random — the game picks any visible tra
 **phrases.js**:
 ```js
 const PHRASES = {
-  thankYou:   ['thank_you_1', 'thank_you_2', 'thank_you_3', 'thank_you_4'],
-  allDone:    'all_done',
-  chosen:     ['chosen', 'chosen_2', 'chosen_3'],
+  thankYou:      ['thank_you_1', 'thank_you_2', 'thank_you_3', 'thank_you_5'],
+  thankYouFood:  ['thank_you_food_1', ..., 'thank_you_food_4'],
+  thankYouComfy: ['thank_you_comfy_1', 'thank_you_comfy_2', 'thank_you_comfy_3'],
+  thankYouToys:  ['thank_you_toys_1'],
+  wrong:         ['wrong_1', 'wrong_2', 'wrong_3', 'wrong_4'],
+  sleepy:        ['sleepy_1', 'sleepy_2'],
+  allDone:       'all_done',
+  chosen:        ['chosen', 'chosen_2', 'chosen_3'],
   _chosenIdx: 0,
   nextChosen() { /* cycles through chosen keys in order */ },
 };

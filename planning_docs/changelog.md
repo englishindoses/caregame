@@ -23,6 +23,45 @@ The original items.js had no `request` field — the request text was assembled 
 
 ---
 
+## 2026-06-25 — PWA support
+
+**Installable as a standalone app (Android + iOS)**
+Added `manifest.json` (name, portrait orientation, cream theme colour) and `sw.js` service worker. On first load the SW pre-caches all 28 images, 37 audio files, all scripts, and the Phaser CDN bundle. Subsequent loads — including fully offline — serve everything from cache. To push an update: bump `CACHE_NAME` in `sw.js`; the browser will re-cache silently in the background and apply on next relaunch.
+
+**Icon placeholder**
+Currently uses `dolly_happy.png`. Needs replacing with a proper 512×512 square PNG (character on `#F2E4D4` background).
+
+---
+
+## 2026-06-25 — Asset optimisation
+
+**WebP conversion**
+High-traffic images converted to WebP (bg_room, dolly_neutral/needy, all bunny variants, item_apple). BootScene selects `.webp` or `.png` per asset via a `webp` Set. Remaining assets stay as PNG until converted.
+
+**Character image resizing and compression**
+All character PNGs resized and compressed to reduce payload. `dolly_play.png` renamed to `dolly_jumping.png` to reflect actual use (the jumping/celebrate face).
+
+**Removed mislabelled thank_you_4.mp3**
+File was labelled incorrectly; removed from repo. `PHRASES.thankYou` updated to use `thank_you_5` in its place.
+
+---
+
+## 2026-06-25 — Sleep category and audio expansion
+
+**Dolly expression variants for sleep items**
+Added `dolly_sleepy.png` (drowsy, half-closed eyes), `dolly_sleeping.png` (eyes closed), and `dolly_jumping.png` (celebrate face). Sleep item requests now show the sleepy face with a preamble audio clip before the request plays.
+
+**Category-specific thank-you audio**
+`PHRASES` gained `thankYouFood`, `thankYouComfy`, and `thankYouToys` arrays. PlayScene picks the appropriate array based on the item's `category` field instead of always playing a generic thank-you.
+
+**Wrong-answer audio**
+Added `wrong_1–4.mp3`. PlayScene plays a random wrong-answer clip on the second wrong attempt (previously just replayed the request audio).
+
+**Sleep preamble audio**
+Added `sleepy_1–2.mp3`. Played before the request audio for sleep category items (blanket, pillow) to set the mood.
+
+---
+
 ## 2026-06-23 — Gameplay and audio improvements
 
 **Character switcher added to PlayScene**
