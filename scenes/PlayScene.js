@@ -488,7 +488,7 @@ class PlayScene extends Phaser.Scene {
         if (cat === 'sleep') {
             this.setCharEmotion('sleeping');
         } else if (cat === 'play' && Math.random() < 0.7) {
-            this.setCharEmotion('play');
+            this.setCharEmotion('jumping');
             this.celebrateChar();
         } else {
             this.setCharEmotion('happy');
