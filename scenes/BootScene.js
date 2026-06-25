@@ -14,21 +14,30 @@ class BootScene extends Phaser.Scene {
         this.load.on('progress',    v    => { bar.width = W * 0.7 * v; });
         this.load.on('loaderror',   file => console.warn(`Missing asset: ${file.key}`));
 
-        this.load.image('bg_room', 'assets/images/bg_room.png');
+        // Keys that have been converted to WebP — everything else loads as PNG
+        const webp = new Set([
+            'bg_room',
+            'dolly_neutral', 'dolly_needy',
+            'bunny_neutral',  'bunny_needy',  'bunny_happy', 'bunny_sleepy', 'bunny_sleeping',
+            'item_apple',
+        ]);
+        const img = key => `assets/images/${key}.${webp.has(key) ? 'webp' : 'png'}`;
+
+        this.load.image('bg_room', img('bg_room'));
 
         CHARACTERS.forEach(char => {
             ['neutral', 'needy', 'happy'].forEach(emotion => {
                 const key = `${char.id}_${emotion}`;
-                this.load.image(key, `assets/images/${key}.png`);
+                this.load.image(key, img(key));
             });
         });
 
-        this.load.image('dolly_sleepy',   'assets/images/dolly_sleepy.png');
-        this.load.image('dolly_sleeping', 'assets/images/dolly_sleeping.png');
-        this.load.image('dolly_jumping',  'assets/images/dolly_jumping.png');
+        this.load.image('dolly_sleepy',   img('dolly_sleepy'));
+        this.load.image('dolly_sleeping', img('dolly_sleeping'));
+        this.load.image('dolly_jumping',  img('dolly_jumping'));
 
         ITEMS.forEach(item => {
-            this.load.image(item.image, `assets/images/${item.image}.png`);
+            this.load.image(item.image, img(item.image));
             this.load.audio(item.audio, `assets/audio/${item.audio}.mp3`);
         });
 
