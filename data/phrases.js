@@ -1,5 +1,5 @@
 const PHRASES = {
-    thankYou:      ['thank_you_1', 'thank_you_2', 'thank_you_3', 'thank_you_4', 'thank_you_5'],
+    thankYou:      ['thank_you_1', 'thank_you_2', 'thank_you_3', 'thank_you_5'],
     thankYouFood:  ['thank_you_food_1', 'thank_you_food_2', 'thank_you_food_3', 'thank_you_food_4'],
     thankYouComfy: ['thank_you_comfy_1', 'thank_you_comfy_2', 'thank_you_comfy_3'],
     thankYouToys:  ['thank_you_toys_1'],
