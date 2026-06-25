@@ -438,7 +438,7 @@ class PlayScene extends Phaser.Scene {
     // ── Request ───────────────────────────────────────────────────────────────
 
     pickRequest() {
-        const active = this.trayObjects.filter(o => o.visible);
+        const active = this.trayObjects.filter(o => !o.correctHandled);
         if (active.length === 0) return;
 
         this.wrongCount     = 0;
