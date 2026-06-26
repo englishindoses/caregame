@@ -151,6 +151,12 @@ const PHRASES = {
 - Items being too small to grab is the main risk. Bigger is almost always better.
 - Audio feeling rushed is the other risk. Slight pauses between phrases help.
 
+## To do
+
+- **PWA icon** — create a proper 512×512 PNG showing all three characters together on the `#F2E4D4` background. Current placeholder (`dolly_happy.png`) looks fine but a group illustration would be nicer. Update `manifest.json` to reference the new file.
+
+---
+
 ## Future expansions
 
 - More items per category.
