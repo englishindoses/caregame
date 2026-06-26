@@ -23,6 +23,47 @@ The original items.js had no `request` field — the request text was assembled 
 
 ---
 
+## 2026-06-26 — Toys at the feet, all-done face, teddy is a toy
+
+**Toys settle at the character's feet**
+When a play item is given it now glides down to a fixed spot at the character's feet, shrinks to ~80%, and stays there (non-draggable) until the tray resets — instead of freezing wherever it was dropped. Multiple toys in one tray line up around the centre.
+
+**"All done" shows a neutral face**
+The character resets to a neutral face just before the "All done, let's play again!" line, so the last item's reward face (e.g. a sleeping face from a blanket) no longer carries over into it.
+
+**Teddy reclassified comfort → play**
+Teddy is a toy, so it now lives in the `play` category: it settles at the feet and stays, uses the toy thank-yous, and gets the jumping animation. The `comfort` category now has no items; its code paths (the comfort thank-you branch and `CATEGORY_COLORS.comfort`) are kept as a defensive no-op for any comfort item added later. The `thankYouComfy` audio is still used by the `sleep` category, so it isn't orphaned.
+
+---
+
+## 2026-06-25 — Reward-flow consistency fixes
+
+**All three characters now have the full emotion set**
+Previously only Dolly's `sleepy`/`sleeping`/`jumping` images were loaded; Giraffe and Bunny silently fell back to their previous face whenever one of those was requested. Added the missing artwork (every character now has `neutral/needy/happy/sleepy/sleeping/jumping`, all WebP) and changed BootScene to load all six emotions for every character in a single loop instead of hard-coding Dolly's three extras. The old PNG character originals were removed — characters are WebP-only now (34 images total: 20 WebP + 14 PNG items).
+
+**Reward face is category-dependent and now works for every character**
+On a correct answer: food/drink and comfort → `happy` + bounce; play → 70% `jumping` / 30% `happy` + bounce; sleep → `sleeping` with the idle bob stopped so the character rests still (no bounce; idle resumes on the next request). Before this fix these special faces only worked for Dolly — Giraffe/Bunny would keep a needy face or bounce with the wrong expression.
+
+**Sleep thank-you is soft-only**
+A sleeping character no longer plays the excited general "yay!" thank-yous; sleep uses the `thankYouComfy` lines alone. Comfort items still combine comfy + general.
+
+**Toys stay in the tray until it resets**
+Play-category items used to vanish 1s after being given (like food being eaten). They now remain in their slot (non-draggable) until the tray reloads — reads better for a toy.
+
+**Request text clears the moment the right item is given**
+Previously the item name lingered on screen through the thank-you audio until the next request overwrote it.
+
+**`sleepy_3.mp3` wired in**
+Added to `PHRASES.sleepy`, so it now loads and plays as a third sleep-preamble variant.
+
+**Per-character `emotions` list as single source of truth**
+Each character in `characters.js` now declares an `emotions` array of the faces it has artwork for. BootScene loads images from that list instead of a hard-coded set, and `setCharEmotion` falls back to the happy face if asked for an emotion a character doesn't have. Previously a missing emotion image silently left the wrong expression on screen (the root cause of the Giraffe/Bunny sleep/jump bug). Hardening only — all three characters currently have the full six-emotion set.
+
+**Doc correction — wrong-answer audio timing**
+Clarified the actual behaviour everywhere: the **first** wrong attempt plays a random `wrong` clip, the **second** replays the request audio, and the third triggers the visual hint. The wrong clips were added after the original silent-first-try design, but CLAUDE.md / game-plan still described the first try as silent and the "Sleep category and audio expansion" note below said the clip played on the second attempt — both were inaccurate and have been corrected.
+
+---
+
 ## 2026-06-25 — PWA support
 
 **Installable as a standalone app (Android + iOS)**
@@ -55,7 +96,7 @@ Added `dolly_sleepy.png` (drowsy, half-closed eyes), `dolly_sleeping.png` (eyes 
 `PHRASES` gained `thankYouFood`, `thankYouComfy`, and `thankYouToys` arrays. PlayScene picks the appropriate array based on the item's `category` field instead of always playing a generic thank-you.
 
 **Wrong-answer audio**
-Added `wrong_1–4.mp3`. PlayScene plays a random wrong-answer clip on the second wrong attempt (previously just replayed the request audio).
+Added `wrong_1–4.mp3`, played on the first wrong attempt (the second attempt replays the request audio, the third shows the visual hint). Before these clips existed the first try was silent. *(Corrected 2026-06-25 — an earlier version of this note said "second attempt", which was wrong.)*
 
 **Sleep preamble audio**
 Added `sleepy_1–2.mp3`. Played before the request audio for sleep category items (blanket, pillow) to set the mood.

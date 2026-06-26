@@ -42,11 +42,11 @@ Open on a phone or phone-emulator in the browser. Desktop works for development 
     PlayScene.js            ← main game loop
   /data
     items.js                ← ITEMS array (15 items)
-    characters.js           ← CHARACTERS array (3 characters × 3 emotion image keys)
+    characters.js           ← CHARACTERS array (3 characters; image keys + per-character `emotions` list)
     phrases.js              ← PHRASES object (category thank-you arrays, wrong, sleepy, allDone, chosen)
   /assets
-    /images                 ← 28 images: 7 WebP + 21 PNG (see Asset reference below)
-    /audio                  ← 37 MP3s (see Asset reference below)
+    /images                 ← 34 images: 20 WebP + 14 PNG (see Asset reference below)
+    /audio                  ← 38 MP3s (see Asset reference below)
   /planning_docs            ← reference docs only, not part of the game
     game-plan.md
     assets-to-create.md
@@ -63,7 +63,7 @@ Open on a phone or phone-emulator in the browser. Desktop works for development 
 
 **Data conventions:**
 - `ITEMS` — 15 items, each `{ id, name, request, image, audio, category }`
-- `CHARACTERS` — 3 characters, each `{ id, name, color, neutral, needy, happy }` (values are image keys)
+- `CHARACTERS` — 3 characters, each `{ id, name, color, neutral, needy, happy, emotions }`. `neutral/needy/happy` are image keys; `emotions` is the array of every emotion that character has artwork for (`['neutral','needy','happy','sleepy','sleeping','jumping']`). `emotions` is the single source of truth: BootScene loads `${id}_${emotion}.webp` for each entry, and `setCharEmotion` falls back to the happy face if asked for an emotion the character doesn't have.
 - `PHRASES` — `{ thankYou, thankYouFood, thankYouComfy, thankYouToys, wrong, sleepy, allDone, chosen, nextChosen() }`. Category-specific thank-you arrays are selected based on the item's `category` field. `wrong` and `sleepy` arrays are used for wrong-answer and sleep-item preamble audio. `nextChosen()` cycles through chosen keys in order (not random).
 
 **Item randomisation:** shuffled-deck approach — all 15 items shuffled at game start, dealt 3 at a time. Reshuffle when all 15 have been seen.
@@ -73,11 +73,16 @@ Open on a phone or phone-emulator in the browser. Desktop works for development 
 2. Deal 3 items from the deck into the tray.
 3. Pick a random tray item as the request; play its audio immediately via `interruptAudio`; show just the item name (e.g. "Banana") in large white text with black outline; set character to neutral or needy (40% needy). Drags are locked while request audio plays.
 4. Child drags an item onto the character. Drags are silently ignored (item returns home) while any audio is playing or while no request is active.
-5. Correct → immediately clears `currentRequest` to block further drags; hides item; sets character to happy; plays thank-you audio; celebrate (character bounce). When thank-you finishes, picks next request and plays its audio (drags locked throughout).
-6. Wrong (1st time) → tween item back to tray, increment wrong counter, set character to needy. No audio — drags remain open.
-7. Wrong (2nd time) → same as above, then replay request audio immediately. Drags locked until it finishes.
+5. Correct → immediately clears `currentRequest` to block further drags and blanks the request text; sets a category-dependent reward face; plays a category-specific thank-you; celebrates. When thank-you finishes, picks next request and plays its audio (drags locked throughout). Behaviour by category:
+   - **food / drink** → item hidden immediately (consumed); `happy` face + bounce; thank-you from general + `thankYouFood`.
+   - **comfort** → item lingers 1s then hides; `happy` face + bounce; thank-you from general + `thankYouComfy`. *(No item currently uses the comfort category — teddy was moved to play — so this branch is defensive for any comfort item added later.)*
+   - **play** → item glides down to the character's feet (shrunk to ~80%, multiple toys line up around the centre) and stays there until the tray resets; 70% `jumping` / 30% `happy`, both with a bounce; thank-you from general + `thankYouToys`. Toys are: book, ball, blocks, toy car, **teddy**.
+   - **sleep** → item lingers 1s then hides; `sleeping` face, idle bob stopped so the character rests still (no bounce, idle resumes on the next request); thank-you from `thankYouComfy` **only** (soft lines — a sleeping character never plays the excited general "yay!" thank-yous).
+   All three characters have the full set of emotion images (`neutral/needy/happy/sleepy/sleeping/jumping`), so every reward face works for every character.
+6. Wrong (1st time) → tween item back to tray, increment wrong counter, set character to needy, play a random `wrong` clip immediately (drags locked until it finishes).
+7. Wrong (2nd time) → same as above, but replay the request audio instead of a `wrong` clip. Drags locked until it finishes.
 8. 3 wrong tries → yellow glow pulse + wiggle tween on the correct item; next tap or drag on that item counts as correct.
-9. Tray empty → play all-done audio (character stays happy). When it finishes, switch to neutral, brief pause, then deal next tray.
+9. Tray empty → reset the character to a neutral face, play all-done audio, then brief pause and deal the next tray. (The reset happens before the all-done line so the last item's face — e.g. `sleeping` — doesn't carry over into "All done, let's play again!")
 
 **Audio system — two-tier:**
 - `interruptAudio(key)` — stops the current sound, clears the queue, plays `key` immediately. Used for request audio (initial and wrong-answer replay) so stale audio never accumulates.
@@ -94,20 +99,21 @@ Open on a phone or phone-emulator in the browser. Desktop works for development 
 
 ## Asset reference
 
-**28 images** in `assets/images/` (WebP where converted, PNG otherwise — BootScene selects automatically):
+**34 images** in `assets/images/`. Background and all character images are WebP; items are PNG except `item_apple`. BootScene loads characters as WebP by key convention and uses a small WebP set (`bg_room`, `item_apple`) for the rest.
 
-WebP: `bg_room.webp`, `dolly_neutral.webp`, `dolly_needy.webp`, `bunny_neutral.webp`, `bunny_needy.webp`, `bunny_happy.webp`, `item_apple.webp`
+WebP (20):
+- `bg_room.webp`
+- Each character × 6 emotions: `dolly_*`, `giraffe_*`, `bunny_*` where `* = neutral, needy, happy, sleepy, sleeping, jumping` (18 files)
+- `item_apple.webp`
 
-PNG:
-- `dolly_happy.png`, `dolly_sleepy.png`, `dolly_sleeping.png`, `dolly_jumping.png`
-- `giraffe_neutral.png`, `giraffe_needy.png`, `giraffe_happy.png`
+PNG (14 — items only):
 - `item_yogurt.png`, `item_banana.png`, `item_sandwich.png`, `item_biscuit.png`
 - `item_water.png`, `item_milk.png`, `item_juice.png`
 - `item_blanket.png`, `item_pillow.png`
 - `item_teddy.png`
 - `item_book.png`, `item_ball.png`, `item_blocks.png`, `item_car.png`
 
-**37 audio files** in `assets/audio/`:
+**38 audio files** in `assets/audio/`:
 
 Requests (15): `request_yogurt.mp3`, `request_banana.mp3`, `request_apple.mp3`, `request_sandwich.mp3`, `request_biscuit.mp3`, `request_water.mp3`, `request_milk.mp3`, `request_juice.mp3`, `request_blanket.mp3`, `request_pillow.mp3`, `request_teddy.mp3`, `request_book.mp3`, `request_ball.mp3`, `request_blocks.mp3`, `request_car.mp3`
 
@@ -115,7 +121,7 @@ Thank-yous (12): `thank_you_1–3,5.mp3` (general), `thank_you_food_1–4.mp3`, 
 
 Wrong answers (4): `wrong_1–4.mp3`
 
-Sleep preambles (2): `sleepy_1–2.mp3`
+Sleep preambles (3): `sleepy_1–3.mp3`
 
 Misc (4): `all_done.mp3`, `chosen.mp3`, `chosen_2.mp3`, `chosen_3.mp3`
 

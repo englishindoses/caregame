@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tcm-v1';
+const CACHE_NAME = 'tcm-v2';
 
 const ASSETS = [
     './',
@@ -11,23 +11,29 @@ const ASSETS = [
     './scenes/PlayScene.js',
     './manifest.json',
 
-    // Images – WebP
+    // Images – WebP (background + all characters)
     './assets/images/bg_room.webp',
     './assets/images/dolly_neutral.webp',
     './assets/images/dolly_needy.webp',
+    './assets/images/dolly_happy.webp',
+    './assets/images/dolly_sleepy.webp',
+    './assets/images/dolly_sleeping.webp',
+    './assets/images/dolly_jumping.webp',
+    './assets/images/giraffe_neutral.webp',
+    './assets/images/giraffe_needy.webp',
+    './assets/images/giraffe_happy.webp',
+    './assets/images/giraffe_sleepy.webp',
+    './assets/images/giraffe_sleeping.webp',
+    './assets/images/giraffe_jumping.webp',
     './assets/images/bunny_neutral.webp',
     './assets/images/bunny_needy.webp',
     './assets/images/bunny_happy.webp',
+    './assets/images/bunny_sleepy.webp',
+    './assets/images/bunny_sleeping.webp',
+    './assets/images/bunny_jumping.webp',
     './assets/images/item_apple.webp',
 
-    // Images – PNG
-    './assets/images/dolly_happy.png',
-    './assets/images/dolly_sleepy.png',
-    './assets/images/dolly_sleeping.png',
-    './assets/images/dolly_jumping.png',
-    './assets/images/giraffe_neutral.png',
-    './assets/images/giraffe_needy.png',
-    './assets/images/giraffe_happy.png',
+    // Images – PNG (items)
     './assets/images/item_yogurt.png',
     './assets/images/item_banana.png',
     './assets/images/item_sandwich.png',
@@ -81,6 +87,7 @@ const ASSETS = [
     './assets/audio/wrong_4.mp3',
     './assets/audio/sleepy_1.mp3',
     './assets/audio/sleepy_2.mp3',
+    './assets/audio/sleepy_3.mp3',
     './assets/audio/all_done.mp3',
     './assets/audio/chosen.mp3',
     './assets/audio/chosen_2.mp3',

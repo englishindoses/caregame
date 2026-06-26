@@ -19,7 +19,7 @@ This file documents all assets currently in the game, for reference if anything 
 
 ---
 
-## Audio (37 files)
+## Audio (38 files)
 
 ### Item requests (15)
 
@@ -59,7 +59,9 @@ This file documents all assets currently in the game, for reference if anything 
 | `thank_you_food_3.mp3` | |
 | `thank_you_food_4.mp3` | |
 
-### Sleep & comfort thank-you responses (3 — sleep and comfort items only, combined with general pool)
+### Sleep & comfort thank-you responses (3 — soft "comfy" lines)
+
+For **sleep** items these play *alone* (no excited general lines — the character is asleep). For **comfort** items they're combined with the general pool.
 
 | Filename | Phrase |
 |---|---|
@@ -82,12 +84,13 @@ This file documents all assets currently in the game, for reference if anything 
 | `wrong_3.mp3` | |
 | `wrong_4.mp3` | |
 
-### Sleepy preamble (2 — plays before blanket/pillow request, 50% chance)
+### Sleepy preamble (3 — plays before blanket/pillow request, 50% chance)
 
 | Filename | Phrase |
 |---|---|
 | `sleepy_1.mp3` | *(soft yawn)* I'm so sleepy. |
 | `sleepy_2.mp3` | It's nearly nap time. |
+| `sleepy_3.mp3` | |
 
 ### Character selection (3)
 
@@ -105,7 +108,7 @@ This file documents all assets currently in the game, for reference if anything 
 
 ---
 
-## Images (30 files)
+## Images (34 files)
 
 ### Background (1)
 
@@ -113,26 +116,30 @@ This file documents all assets currently in the game, for reference if anything 
 |---|---|---|
 | `bg_room` | .webp | Cosy children's bedroom interior. Soft pastel walls, fluffy rug, small bed in the background. Warm daylight. Centre upper area clear for the character, lower quarter clear for the item tray. |
 
-### Characters (14)
+### Characters (18 — 3 characters × 6 emotions)
 
-All characters: soft cartoon style, seated facing forward, transparent background, 800×800px.
+All characters: soft cartoon style, seated facing forward, transparent background, 800×800px. **All character images are now WebP** (the PNG originals were removed). Every character has the full six-emotion set, so all reward faces work for all characters.
 
 | Filename | Format | Description |
 |---|---|---|
 | `dolly_neutral` | .webp | Cute soft rag doll, yarn hair, simple dress, friendly neutral expression with a small smile. |
 | `dolly_needy` | .webp | Same dolly, small pout and big sad puppy eyes. |
-| `dolly_happy` | .png | Same dolly, big open smile, rosy cheeks, sparkly eyes. |
-| `dolly_sleepy` | .png | Same dolly, drooping eyelids, small relaxed smile, hand near cheek. |
-| `dolly_sleeping` | .png | Same dolly, eyes closed, fully asleep. |
-| `dolly_jumping` | .png | Same dolly, excited jumping pose. |
-| `giraffe_neutral` | .png | Stuffed-toy style giraffe, long neck, soft yellow with pale brown spots, gentle neutral expression. |
-| `giraffe_needy` | .png | Same giraffe, pouty mouth, big sad eyes. |
-| `giraffe_happy` | .png | Same giraffe, big smile, sparkly eyes, rosy cheeks. |
+| `dolly_happy` | .webp | Same dolly, big open smile, rosy cheeks, sparkly eyes. |
+| `dolly_sleepy` | .webp | Same dolly, drooping eyelids, small relaxed smile, hand near cheek. |
+| `dolly_sleeping` | .webp | Same dolly, eyes closed, fully asleep. |
+| `dolly_jumping` | .webp | Same dolly, excited jumping pose. |
+| `giraffe_neutral` | .webp | Stuffed-toy style giraffe, long neck, soft yellow with pale brown spots, gentle neutral expression. |
+| `giraffe_needy` | .webp | Same giraffe, pouty mouth, big sad eyes. |
+| `giraffe_happy` | .webp | Same giraffe, big smile, sparkly eyes, rosy cheeks. |
+| `giraffe_sleepy` | .webp | Same giraffe, drooping eyelids, soft sleepy smile. |
+| `giraffe_sleeping` | .webp | Same giraffe, eyes closed, fully asleep. |
+| `giraffe_jumping` | .webp | Same giraffe, excited jumping pose. |
 | `bunny_neutral` | .webp | Cuddly stuffed bunny, long floppy ears, neutral happy expression. |
 | `bunny_needy` | .webp | Same bunny, pouty mouth, big sad eyes. |
 | `bunny_happy` | .webp | Same bunny, big smile, sparkly eyes, rosy cheeks. |
 | `bunny_sleepy` | .webp | Same bunny, drooping eyelids, soft sleepy smile, ears flopping slightly forward. |
 | `bunny_sleeping` | .webp | Same bunny, eyes closed, fully asleep. |
+| `bunny_jumping` | .webp | Same bunny, excited jumping pose. |
 
 ### Items (15)
 
@@ -157,6 +164,11 @@ All items: transparent background, single object centred, soft cartoon style, 23
 | `item_car` | Small chunky toy car in bright primary colours. |
 
 ---
+
+## To make / still needed
+
+- **More toy thank-you responses.** There is currently only one (`thank_you_toys_1.mp3`), so play-category rewards have far less variety than food or comfort. Add `thank_you_toys_2–4.mp3` in the same warm voice (e.g. "Yay, let's play!", "This is so much fun!", "I love playing with you!") so toys match the other categories. BootScene loads the whole `thankYouToys` array automatically once they're added to `phrases.js`.
+- **PWA icon.** A proper 512×512 PNG showing all three characters together on the `#F2E4D4` background. Currently falls back to `dolly_happy`.
 
 ## Notes
 

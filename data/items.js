@@ -9,7 +9,7 @@ const ITEMS = [
     { id: 'juice',    name: 'juice',    request: 'some juice',    image: 'item_juice',    audio: 'request_juice',    category: 'drink'   },
     { id: 'blanket',  name: 'blanket',  request: 'my blanket',    image: 'item_blanket',  audio: 'request_blanket',  category: 'sleep'   },
     { id: 'pillow',   name: 'pillow',   request: 'my pillow',     image: 'item_pillow',   audio: 'request_pillow',   category: 'sleep'   },
-    { id: 'teddy',    name: 'teddy',    request: 'my teddy',      image: 'item_teddy',    audio: 'request_teddy',    category: 'comfort' },
+    { id: 'teddy',    name: 'teddy',    request: 'my teddy',      image: 'item_teddy',    audio: 'request_teddy',    category: 'play'    },
     { id: 'book',     name: 'book',     request: 'my book',       image: 'item_book',     audio: 'request_book',     category: 'play'    },
     { id: 'ball',     name: 'ball',     request: 'my ball',       image: 'item_ball',     audio: 'request_ball',     category: 'play'    },
     { id: 'blocks',   name: 'blocks',   request: 'my blocks',     image: 'item_blocks',   audio: 'request_blocks',   category: 'play'    },

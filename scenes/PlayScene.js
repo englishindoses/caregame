@@ -34,6 +34,8 @@ class PlayScene extends Phaser.Scene {
         this.currentRequest = null;
         this.wrongCount     = 0;
         this.idleTween      = null;
+        this._celebrating   = false;
+        this._toysAtFeet    = 0;
 
         this.buildStaticUI();
         this.setupDragEvents();
@@ -273,6 +275,7 @@ class PlayScene extends Phaser.Scene {
     // ── Character animation ──────────────────────────────────────────────────
 
     startIdle() {
+        if (this.idleTween || this._celebrating) return;
         this.idleTween = this.tweens.add({
             targets:  this.charSprite,
             y:        this.charY - 14,
@@ -281,6 +284,14 @@ class PlayScene extends Phaser.Scene {
             repeat:   -1,
             ease:     'Sine.easeInOut'
         });
+    }
+
+    stopIdle() {
+        if (this.idleTween) {
+            this.idleTween.stop();
+            this.idleTween = null;
+        }
+        this.charSprite.y = this.charY;
     }
 
     scaleChar() {
@@ -292,8 +303,12 @@ class PlayScene extends Phaser.Scene {
     }
 
     setCharEmotion(emotion) {
-        const key = `${this.characterId}_${emotion}`;
-        if (this.charSprite.setTexture && this.textures.exists(key)) {
+        if (!this.charSprite.setTexture) return;
+        let key = `${this.characterId}_${emotion}`;
+        // Fall back to the happy face if this character lacks the requested emotion,
+        // so a missing image never leaves the wrong expression on screen.
+        if (!this.textures.exists(key)) key = `${this.characterId}_happy`;
+        if (this.textures.exists(key)) {
             this.charSprite.setTexture(key);
             this.scaleChar();
         }
@@ -304,6 +319,7 @@ class PlayScene extends Phaser.Scene {
             this.idleTween.stop();
             this.idleTween = null;
         }
+        this._celebrating = true;
         this.charSprite.y = this.charY;
 
         this.tweens.add({
@@ -315,6 +331,7 @@ class PlayScene extends Phaser.Scene {
             ease:     'Back.easeOut',
             onComplete: () => {
                 this.charSprite.y = this.charY;
+                this._celebrating = false;
                 this.startIdle();
             }
         });
@@ -395,6 +412,7 @@ class PlayScene extends Phaser.Scene {
         this.trayLabels.forEach(l => { if (l) l.destroy(); });
         this.trayObjects = [];
         this.trayLabels  = [];
+        this._toysAtFeet = 0;
     }
 
     buildTray(items) {
@@ -448,6 +466,7 @@ class PlayScene extends Phaser.Scene {
         this.requestText.setText(displayName);
         const NEEDY_CHANCE = 0.4;
         this.setCharEmotion(Math.random() < NEEDY_CHANCE ? 'needy' : 'neutral');
+        this.startIdle();   // resume bobbing if the character was asleep
 
         if (this.currentRequest.category === 'sleep' && Math.random() < 0.5) {
             this.setCharEmotion('sleepy');
@@ -465,6 +484,7 @@ class PlayScene extends Phaser.Scene {
         obj.correctHandled = true;
 
         this.currentRequest = null;
+        this.requestText.setText('');   // name disappears as soon as the right item is given
 
         this.tweens.killTweensOf(obj);
         obj.setAngle(0);
@@ -479,14 +499,18 @@ class PlayScene extends Phaser.Scene {
 
         const cat = obj.itemData.category;
         if (cat === 'food' || cat === 'drink') {
-            obj.setVisible(false);
+            obj.setVisible(false);               // eaten / drunk — gone right away
+        } else if (cat === 'play') {
+            this.input.setDraggable(obj, false);  // toy stays until the tray resets
+            this.placeToyAtFeet(obj);             // ...and settles by the character's feet
         } else {
             this.input.setDraggable(obj, false);
-            this.time.delayedCall(1000, () => obj.setVisible(false));
+            this.time.delayedCall(1000, () => obj.setVisible(false)); // sleep / comfort: linger then hide
         }
 
         if (cat === 'sleep') {
             this.setCharEmotion('sleeping');
+            this.stopIdle();   // asleep — rest still, no idle bobbing
         } else if (cat === 'play' && Math.random() < 0.7) {
             this.setCharEmotion('jumping');
             this.celebrateChar();
@@ -498,7 +522,10 @@ class PlayScene extends Phaser.Scene {
         let thankYouPool;
         if (cat === 'food' || cat === 'drink') {
             thankYouPool = [...PHRASES.thankYou, ...PHRASES.thankYouFood];
-        } else if (cat === 'sleep' || cat === 'comfort') {
+        } else if (cat === 'sleep') {
+            // Asleep — use the soft "comfy" lines only, never the excited "yay!" general ones.
+            thankYouPool = PHRASES.thankYouComfy;
+        } else if (cat === 'comfort') {
             thankYouPool = [...PHRASES.thankYou, ...PHRASES.thankYouComfy];
         } else if (cat === 'play') {
             thankYouPool = [...PHRASES.thankYou, ...PHRASES.thankYouToys];
@@ -510,7 +537,12 @@ class PlayScene extends Phaser.Scene {
         const remaining = this.trayObjects.filter(o => !o.correctHandled);
 
         if (remaining.length === 0) {
-            this.requestText.setText('');
+            // Reset to a neutral face for "all done, let's play again!" (the last item
+            // may have left a sleeping/other face from its own reward).
+            this.queueThen(() => {
+                this.setCharEmotion('neutral');
+                this.startIdle();
+            });
             this.queueAudio(PHRASES.allDone);
             this.queueThen(() => {
                 this.setCharEmotion('neutral');
@@ -582,6 +614,28 @@ class PlayScene extends Phaser.Scene {
             onUpdate: () => {
                 if (obj.label) obj.label.setPosition(obj.x, obj.y);
             }
+        });
+    }
+
+    // A given toy glides down to the character's feet and stays there (slightly
+    // smaller) until the tray resets. Multiple toys line up around the centre.
+    placeToyAtFeet(obj) {
+        const slot    = this._toysAtFeet++;
+        const offsets = [0, -1, 1, -2, 2];
+        const spread  = this.ITEM_SIZE * 0.5;
+        const feetX   = this.charX + (offsets[slot] || 0) * spread;
+        const feetY   = (this.H - this.TRAY_H) - this.ITEM_SIZE * 0.35;
+        const scale   = (obj.scaleX || 1) * 0.8;
+
+        this.tweens.add({
+            targets:  obj,
+            x:        feetX,
+            y:        feetY,
+            scaleX:   scale,
+            scaleY:   scale,
+            duration: 350,
+            ease:     'Cubic.easeOut',
+            onUpdate: () => { if (obj.label) obj.label.setPosition(obj.x, obj.y); }
         });
     }
 }

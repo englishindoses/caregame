@@ -29,7 +29,7 @@ A touch-based vocabulary game for 3-year-olds. The child chooses a character (Do
     characters.js           ← all characters (id, name, color, image keys)
     phrases.js              ← shared phrases (thank you variants, all done, chosen)
   /assets
-    /images                 ← 28 images: 7 WebP + 21 PNG (character emotions, items, background)
+    /images                 ← 34 images: 20 WebP + 14 PNG (character emotions, items, background)
     /audio                  ← 37 MP3s (requests, category thank-yous, wrong, sleepy, all-done, chosen)
   /planning_docs            ← planning docs, not part of the game
 ```
@@ -64,24 +64,27 @@ Loads all assets with a simple progress bar. If a character is saved in `localSt
 3. A random tray item is chosen as the request. Request audio plays immediately (interrupts any prior audio). Character switches to neutral or needy (40% chance of needy).
 4. Child drags an item from the tray onto the character.
 5. **Correct**:
-   - `currentRequest` cleared immediately so no further drags register during audio.
-   - Character switches to `happy` face.
-   - Plays a random thank-you audio (4 variants). Drags locked throughout.
-   - Celebration bounce animation.
-   - Item disappears from tray.
+   - `currentRequest` cleared immediately so no further drags register during audio; the request text is blanked the moment the right item is given.
+   - Character switches to a category-dependent reward face:
+     - food / drink → `happy` + bounce, item hidden immediately (consumed).
+     - comfort → `happy` + bounce, item lingers 1s then hides. *(No item currently uses the comfort category — teddy moved to play — so this is defensive for any comfort item added later.)*
+     - play → 70% `jumping` / 30% `happy`, both with a bounce; item glides down to the character's feet (shrunk to ~80%, multiple toys line up around the centre) and stays there until the tray resets. Toys: book, ball, blocks, toy car, teddy.
+     - sleep → `sleeping`, idle bob stopped so the character rests still (no bounce); item lingers 1s. Idle resumes on the next request.
+   - All three characters have the full emotion set, so every reward face works for every character.
+   - Plays a category-specific thank-you. Most categories pool the general thank-yous with their category-specific ones; **sleep is the exception** — it plays the soft `thankYouComfy` lines only, never the excited general "yay!" ones. Drags locked throughout.
    - After thank-you audio finishes, next request is picked and its audio plays (drags locked until it finishes).
 6. **Wrong (1st time)**:
    - Item tweens back to its tray position.
    - Wrong-counter increments.
    - Character switches to needy.
-   - No audio — drags remain open immediately.
+   - Plays a random `wrong` clip immediately. Drags locked until it finishes.
 7. **Wrong (2nd time)**:
-   - Same as above, then request audio replays immediately. Drags locked until it finishes.
+   - Same as above, but replays the request audio instead of a `wrong` clip. Drags locked until it finishes.
 8. **After 3 wrong tries on the same request**:
    - Yellow glow pulses behind the correct item.
    - Correct item wiggles continuously.
    - Next tap or drag on that item counts as correct and triggers full celebration.
-8. Tray empty → all-done audio plays (character stays happy). When audio finishes, character switches to neutral, brief pause, new tray deals. Loop continues.
+8. Tray empty → character resets to a neutral face, all-done audio plays, then brief pause and the new tray deals. (The reset happens before the all-done line so the last item's face — e.g. `sleeping` — doesn't carry over.) Loop continues.
 
 **Door button (long-press, 2s hold):**
 - Small semi-transparent door icon in the top-right corner.
@@ -107,7 +110,8 @@ The order of requests within a tray is random — the game picks any visible tra
 
 **characters.js** — 3 characters, each:
 ```js
-{ id: 'dolly', name: 'Dolly', color: 0xFFAACC, neutral: 'dolly_neutral', needy: 'dolly_needy', happy: 'dolly_happy' }
+{ id: 'dolly', name: 'Dolly', color: 0xFFAACC, neutral: 'dolly_neutral', needy: 'dolly_needy', happy: 'dolly_happy',
+  emotions: ['neutral', 'needy', 'happy', 'sleepy', 'sleeping', 'jumping'] }
 ```
 
 **phrases.js**:
@@ -118,7 +122,7 @@ const PHRASES = {
   thankYouComfy: ['thank_you_comfy_1', 'thank_you_comfy_2', 'thank_you_comfy_3'],
   thankYouToys:  ['thank_you_toys_1'],
   wrong:         ['wrong_1', 'wrong_2', 'wrong_3', 'wrong_4'],
-  sleepy:        ['sleepy_1', 'sleepy_2'],
+  sleepy:        ['sleepy_1', 'sleepy_2', 'sleepy_3'],
   allDone:       'all_done',
   chosen:        ['chosen', 'chosen_2', 'chosen_3'],
   _chosenIdx: 0,

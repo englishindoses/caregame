@@ -4,7 +4,7 @@ const PHRASES = {
     thankYouComfy: ['thank_you_comfy_1', 'thank_you_comfy_2', 'thank_you_comfy_3'],
     thankYouToys:  ['thank_you_toys_1'],
     wrong:         ['wrong_1', 'wrong_2', 'wrong_3', 'wrong_4'],
-    sleepy:        ['sleepy_1', 'sleepy_2'],
+    sleepy:        ['sleepy_1', 'sleepy_2', 'sleepy_3'],
     allDone:       'all_done',
     chosen:     ['chosen', 'chosen_2', 'chosen_3'],
     _chosenIdx: 0,
