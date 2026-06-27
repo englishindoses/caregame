@@ -36,6 +36,7 @@ class PlayScene extends Phaser.Scene {
         this.idleTween      = null;
         this._celebrating   = false;
         this._toysAtFeet    = 0;
+        this.traysCleared   = 0;   // after 3, break for the mini-game select screen
 
         this.buildStaticUI();
         this.setupDragEvents();
@@ -546,7 +547,15 @@ class PlayScene extends Phaser.Scene {
             this.queueAudio(PHRASES.allDone);
             this.queueThen(() => {
                 this.setCharEmotion('neutral');
-                this.time.delayedCall(400, () => this.loadNextTray());
+                this.traysCleared++;
+                if (this.traysCleared >= 3) {
+                    // Break the routine — go play a mini-game, then resume.
+                    this.traysCleared = 0;
+                    this.time.delayedCall(400, () =>
+                        this.scene.start('MiniGameSelectScene', { characterId: this.characterId }));
+                } else {
+                    this.time.delayedCall(400, () => this.loadNextTray());
+                }
             });
         } else {
             this.queueThen(() => this.pickRequest());

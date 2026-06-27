@@ -41,6 +41,12 @@ class BootScene extends Phaser.Scene {
             ...PHRASES.thankYouToys,
             ...PHRASES.wrong,
             ...PHRASES.sleepy,
+            // Catch mini-game (files added later — missing keys just no-op).
+            ...PHRASES.playInvite,
+            ...PHRASES.playCatch,
+            ...PHRASES.catchExcite,
+            ...PHRASES.playerCatch,
+            ...PHRASES.playTired,
         ].forEach(key => {
             this.load.audio(key, `assets/audio/${key}.mp3`);
         });
@@ -48,9 +54,18 @@ class BootScene extends Phaser.Scene {
         PHRASES.chosen.forEach(key => {
             this.load.audio(key, `assets/audio/${key}.mp3`);
         });
+        this.load.audio('boing', 'assets/audio/boing.mp3');  // wall-bounce SFX (added later)
     }
 
     create() {
+        // Dev shortcut: open index.html?mini to jump straight to the mini-game
+        // select screen (skips clearing 3 trays). Remove before release.
+        if (new URLSearchParams(window.location.search).has('mini')) {
+            const charId = localStorage.getItem('tcm_character') || 'dolly';
+            this.scene.start('MiniGameSelectScene', { characterId: charId });
+            return;
+        }
+
         const saved = localStorage.getItem('tcm_character');
         if (saved) {
             this.scene.start('PlayScene', { characterId: saved });

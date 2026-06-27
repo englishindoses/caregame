@@ -6,6 +6,14 @@ const PHRASES = {
     wrong:         ['wrong_1', 'wrong_2', 'wrong_3', 'wrong_4'],
     sleepy:        ['sleepy_1', 'sleepy_2', 'sleepy_3'],
     allDone:       'all_done',
+
+    // ── Catch mini-game ──────────────────────────────────────────────────────
+    playInvite:    ['play_invite_1', 'play_invite_2', 'play_invite_3'],  // "What shall we play?"
+    playCatch:     ['play_catch_1', 'play_catch_2'],                      // tapped the ball tile
+    catchExcite:   ['catch_excite_1', 'catch_excite_2', 'catch_excite_3'],// character caught it
+    playerCatch:   ['player_catch_1', 'player_catch_2', 'player_catch_3'],// child caught it
+    playTired:     ['play_tired_1', 'play_tired_2', 'play_tired_3'],      // 5 catches done, wind down
+
     chosen:     ['chosen', 'chosen_2', 'chosen_3'],
     _chosenIdx: 0,
     nextChosen() {

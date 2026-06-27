@@ -7,7 +7,11 @@ const config = {
         width: 720,
         height: 1280,
     },
-    scene: [BootScene, SelectScene, PlayScene]
+    physics: {
+        default: 'arcade',
+        arcade: { gravity: { y: 0 }, debug: false },
+    },
+    scene: [BootScene, SelectScene, PlayScene, MiniGameSelectScene, CatchScene]
 };
 
 new Phaser.Game(config);

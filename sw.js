@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tcm-v2';
+const CACHE_NAME = 'tcm-v3';
 
 const ASSETS = [
     './',
@@ -6,9 +6,12 @@ const ASSETS = [
     './data/items.js',
     './data/characters.js',
     './data/phrases.js',
+    './data/minigames.js',
     './scenes/BootScene.js',
     './scenes/SelectScene.js',
     './scenes/PlayScene.js',
+    './scenes/MiniGameSelectScene.js',
+    './scenes/CatchScene.js',
     './manifest.json',
 
     // Images – WebP (background + all characters)
@@ -92,6 +95,12 @@ const ASSETS = [
     './assets/audio/chosen.mp3',
     './assets/audio/chosen_2.mp3',
     './assets/audio/chosen_3.mp3',
+
+    // Catch mini-game audio — add these (and bump CACHE_NAME) once the files
+    // exist. cache.addAll() rejects the whole install if any file 404s, so they
+    // are intentionally left out until recorded:
+    //   play_invite_1..3, play_catch_1..2, catch_excite_1..3,
+    //   player_catch_1..3, play_tired_1..3, boing
 ];
 
 const PHASER_CDN = 'https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js';
