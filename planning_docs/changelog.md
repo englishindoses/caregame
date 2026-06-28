@@ -4,6 +4,31 @@ History of decisions and plan changes. Short entries: what changed and why.
 
 ---
 
+## 2026-06-27 — Catch mini-game (first mini-game; audio pending)
+
+**New "break" loop after 3 trays**
+PlayScene now counts cleared trays (`traysCleared`); after 3 it starts `MiniGameSelectScene` instead of dealing the next tray, then resumes via `{ fromMinigame: true }` (skips the chosen-audio intro). Breaks up the routine so the game isn't an endless request loop.
+
+**MiniGameSelectScene — "What shall we play?"**
+A select screen built to scale: each `MINIGAMES` entry is a tappable tile, layout adapts for 1–4 tiles (only Catch wired up). The ball tile uses the ball image's full bounding box as the hit area so a child can tap anywhere on it (the first attempt used a Container with a custom rectangle hit area, which mis-aligned so only part of the ball responded — switched to a plain interactive image). Removed the white backing box so the ball sits transparently on the room background, per testing feedback.
+
+**CatchScene — throw-and-catch, no failure states**
+Arcade Physics with **no gravity** (top-down feel) so throws stay forgiving for a 3-year-old. Throw is **drag-and-release** (the ball follows the finger, release direction + speed become the throw); sideways flicks bounce off the walls. Character catches when the moving ball passes within ~150px, jumps, thanks the child, holds ~800ms, then throws the ball back down to the rug. After 5 catches the character tires (sleepy) and returns to the main game.
+
+**"Option B" — ball settles on the rug instead of floating**
+First version left a resting ball frozen wherever it stopped (floating in mid-air against the bedroom background). Considered real gravity but it makes catching too hard for a toddler. Chose Option B: the physics world is bounded at the rug line (`FLOOR_Y`) so the ball can't sink below it, and a throw that runs out of energy does a quick accelerating drop onto the floor (`settleToFloor`). Keeps throws forgiving while looking like the ball lands. Character also nudged down so it doesn't float above the floor.
+
+**Synthesized "boing"**
+The wall-bounce SFX is generated in code (Web Audio oscillator with a fast pitch drop + fade) so the bounce is audible immediately without recording a file. Falls back to `boing.mp3` automatically once that file exists. Respects mute.
+
+**Audio deferred**
+The 14 mini-game voice clips and `boing.mp3` aren't recorded yet. BootScene tries to load them (errors logged + ignored), the audio queue no-ops on missing keys, and every beat is backed by a timer — so the whole mini-game plays on timers until the clips are added. The character-catch line reuses the existing `thank_you_toys_1` for now. Phrase arrays added to `PHRASES`: `playInvite, playCatch, catchExcite, playerCatch, playTired`.
+
+**Wiring**
+Arcade Physics enabled in `main.js`; `MiniGameSelectScene` + `CatchScene` registered and scripted into `index.html`; `data/minigames.js` added. `?mini` URL flag in BootScene jumps straight to the mini-game for testing (to be removed before release). `sw.js` bumped `tcm-v2 → tcm-v3` with the new code files cached — mini-game audio paths intentionally left out until the files exist, since `cache.addAll` rejects the whole install on any 404.
+
+---
+
 ## During development (build phases 1–8)
 
 **Tray size: 5 → 3 items**

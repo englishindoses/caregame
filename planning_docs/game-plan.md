@@ -24,10 +24,13 @@ A touch-based vocabulary game for 3-year-olds. The child chooses a character (Do
     BootScene.js            ← loads all images and audio, shows loading screen
     SelectScene.js          ← character picker
     PlayScene.js            ← main game loop
+    MiniGameSelectScene.js  ← "What shall we play?" screen
+    CatchScene.js           ← Catch mini-game (Arcade Physics)
   /data
     items.js                ← all items (id, name, request, image key, audio key, category)
     characters.js           ← all characters (id, name, color, image keys)
-    phrases.js              ← shared phrases (thank you variants, all done, chosen)
+    phrases.js              ← shared phrases (thank you variants, all done, chosen, mini-game lines)
+    minigames.js            ← mini-game tiles for the select screen
   /assets
     /images                 ← 34 images: 20 WebP + 14 PNG (character emotions, items, background)
     /audio                  ← 37 MP3s (requests, category thank-yous, wrong, sleepy, all-done, chosen)
@@ -90,6 +93,27 @@ Loads all assets with a simple progress bar. If a character is saved in `localSt
 - Small semi-transparent door icon in the top-right corner.
 - Subtle arc draws around it during the hold.
 - On completion, clears saved character and goes straight to SelectScene.
+
+## Scene 4 — Mini-games ✓ (Catch; audio pending)
+
+After 3 trays are cleared, PlayScene breaks to a mini-game and resumes afterwards. Built so more mini-games can be added as data + a scene file.
+
+**MiniGameSelectScene — "What shall we play?"**
+- Same bedroom background; chosen character bobs small in the bottom-left.
+- One tappable tile per `MINIGAMES` entry (just the ball for now). The whole ball image is the tap target so a child can tap anywhere on it. Layout adapts for 1–4 tiles.
+- Tap → plays a "let's play catch!" line → starts the mini-game scene.
+
+**CatchScene — throw-and-catch with the character (no failure states)**
+- Arcade Physics, **no gravity** — throws drift to the character and stay forgiving for a toddler.
+- **Drag-and-release throw:** drag the ball and let go; release direction + speed = the throw. Sideways flicks bounce off the walls.
+- **Ball rests on the rug** (Option B): the world is bounded at the rug line so the ball can't sink below it; when a throw runs out of energy it drops and settles on the floor instead of floating. Soft shadow on the rug.
+- **Catch:** if the moving ball passes within ~150px of the character it's caught → character jumps, says thank-you (`thank_you_toys_1` for now), then throws it back down to the child.
+- **Exit:** after 5 catches the character tires (sleepy face + tired line) and returns to the main game.
+- **Boing** on every wall bounce — synthesized in code (soft "doink") until a `boing.mp3` is added.
+
+**Audio pending:** the 14 mini-game voice clips + `boing.mp3` aren't recorded yet. The mini-game runs fully on timers without them (missing audio just no-ops). See `mini-game-assets.md` for the list to record.
+
+**Dev shortcut:** open `index.html?mini` to jump straight to the mini-game without clearing 3 trays. Remove before final release.
 
 ## Item randomisation ✓
 
@@ -157,6 +181,8 @@ const PHRASES = {
 
 ## To do
 
+- **Catch mini-game audio** — record the 14 voice clips (`play_invite_1–3`, `play_catch_1–2`, `catch_excite_1–3`, `player_catch_1–3`, `play_tired_1–3`) + `boing.mp3`, drop them in `assets/audio/`, add their paths to `sw.js`, and bump `CACHE_NAME`. See `mini-game-assets.md`.
+- **Remove the `?mini` dev shortcut** from BootScene before final release.
 - **PWA icon** — create a proper 512×512 PNG showing all three characters together on the `#F2E4D4` background. Current placeholder (`dolly_happy.png`) looks fine but a group illustration would be nicer. Update `manifest.json` to reference the new file.
 
 ---
@@ -165,7 +191,7 @@ const PHRASES = {
 
 - More items per category.
 - Specific emotion faces (sleepy with droopy eyes, hungry with hand on tummy).
-- Mini activities — bath time, bedtime, going for a walk.
+- More mini activities — bath time, bedtime, going for a walk, tidy-up, story (Catch is the first; the select screen already supports up to 4 tiles).
 - Per-character voices.
 - Coloured tray slots that subtly hint at categories.
 - A simple sticker reward album for parents to share with the child.
