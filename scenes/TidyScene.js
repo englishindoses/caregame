@@ -49,7 +49,7 @@ class TidyScene extends Phaser.Scene {
         this.PERSP_NEAR_Y = H * 0.92;
         this.PERSP_MIN    = 0.70;
         this.PERSP_MAX    = 1.30;
-        this.TOY_TARGET  = W * 0.18;
+        this.TOY_TARGET  = W * 0.21;
 
         this.remaining = this.toyDefs.length;
         this._ending   = false;
@@ -283,13 +283,18 @@ class TidyScene extends Phaser.Scene {
             if (dist < this.BOX_RADIUS) {
                 this.dropInBox(obj);
             } else {
-                // Dropped in the air → gravity pulls it back down to its rug level.
+                // Rest where dropped if it's on the rug; only fall (gravity) if it
+                // was released up in the air above the rug's back edge.
+                const onRug = obj.y >= this.RUG_TOP;
+                obj.restY = onRug ? obj.y : this.RUG_TOP;
+                obj.baseDepth = 7 + Phaser.Math.Clamp(
+                    (obj.restY - this.RUG_TOP) / Math.max(1, this.RUG_BOTTOM - this.RUG_TOP), 0, 1) * 4;
                 obj.setDepth(obj.baseDepth);
                 if (obj.body) {
                     obj.body.enable = true;
-                    obj.body.setAllowGravity(true);
                     obj.setVelocity(0, 0);
-                    obj.landed = false;
+                    obj.body.setAllowGravity(!onRug);   // gravity only when above the rug
+                    obj.landed = onRug;
                 }
                 this.applyPerspective(obj);
                 if (Math.random() < 0.4) this.playVoice(Phaser.Utils.Array.GetRandom(PHRASES.tidyOops));
