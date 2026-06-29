@@ -1,177 +1,225 @@
 # Assets Reference
 
-This file documents all assets currently in the game, for reference if anything needs to be remade or added later.
+The definitive list of game assets: what **exists** and what **still needs to be made**.
+
+- **Audio transcripts below are auto-generated from the actual audio files** (local Whisper), so they reflect what each clip really says — which sometimes differs from the originally-planned script.
+- Counts current as of this update: **52 audio files**, **36 images**.
 
 ## Style notes
 
-**For images:**
-- All characters and items share the **same illustration style**: soft cartoon, friendly, warm pastel colours, simple shapes, suitable for a 3-year-old.
-- Each character's emotions were generated in the same ChatGPT session so the character stays visually consistent (same outfit, same pose, only the face changes).
-- All items on a **transparent background** so they sit cleanly on the tray.
-- The background image leaves the **centre upper area clear for the character** and the **lower 25% clear for the item tray**.
+**Images:** soft cartoon, friendly, warm pastel colours, simple shapes, suitable for a 3-year-old. Characters consistent per character (same outfit/pose, only the face changes). Items on a transparent background. Background leaves the centre-upper area clear for the character and the lower quarter clear for the tray.
 
-**For audio:**
-- Single warm, friendly narrator voice for all characters.
-- Slow and clear — the child is 3 years old.
-- Slight pause between sentences within a phrase.
-- MP3 format.
-- UK English throughout ("biscuit", "lovely", "shall we").
+**Audio:** single warm, friendly narrator. Slow and clear. Slight pause between sentences. MP3. UK English throughout ("biscuit", "lovely", "shall we").
 
 ---
 
-## Audio (38 files)
+# AUDIO
 
-### Item requests (15)
+## ✅ Audio we have (52 files)
 
-| Filename | Phrase |
+### Main game (38)
+
+**Item requests (15)**
+
+| Filename | Says |
 |---|---|
-| `request_yogurt.mp3` | I'm hungry. I want some yogurt please. |
-| `request_banana.mp3` | I'm hungry. I want a banana please. |
-| `request_apple.mp3` | I'm hungry. I want an apple please. |
-| `request_sandwich.mp3` | I'm hungry. I want a sandwich please. |
-| `request_biscuit.mp3` | I'm hungry. I want a biscuit please. |
-| `request_water.mp3` | I'm thirsty. I want some water please. |
-| `request_milk.mp3` | I'm thirsty. I want some milk please. |
-| `request_juice.mp3` | I'm thirsty. I want some juice please. |
-| `request_blanket.mp3` | I'm sleepy. I want my blanket please. |
-| `request_pillow.mp3` | I'm sleepy. I want my pillow please. |
-| `request_teddy.mp3` | I want my teddy please. |
-| `request_book.mp3` | Let's read the book together! |
-| `request_ball.mp3` | Let's play with the ball! |
-| `request_blocks.mp3` | Let's play with the blocks! |
-| `request_car.mp3` | Let's play with the toy car! |
+| `request_yogurt.mp3` | I'm hungry, can I have some yogurt please? |
+| `request_banana.mp3` | I'm hungry. I want a banana, please. |
+| `request_apple.mp3` | I want an apple, please. |
+| `request_sandwich.mp3` | I'm hungry. Can I have a sandwich, please? |
+| `request_biscuit.mp3` | Can I have a biscuit please? |
+| `request_water.mp3` | I'm thirsty. Can I have some water please? |
+| `request_milk.mp3` | I want some milk please. |
+| `request_juice.mp3` | Can I have some juice please? |
+| `request_blanket.mp3` | I'm cold. Can I have my blanket, please? |
+| `request_pillow.mp3` | I'm sleepy. Can you give me my pillow, please? |
+| `request_teddy.mp3` | Can you give me my teddy please? |
+| `request_book.mp3` | Let's read a book together. |
+| `request_ball.mp3` | Let's play with the ball. |
+| `request_blocks.mp3` | Do you want to play with the blocks with me? |
+| `request_car.mp3` | Let's play with my car. |
 
-### General thank-you responses (4 — play for any item)
+**General thank-yous (4)**
 
-| Filename | Phrase |
+| Filename | Says |
 |---|---|
-| `thank_you_1.mp3` | Thank you! |
+| `thank_you_1.mp3` | Thank you. |
 | `thank_you_2.mp3` | Yay! Thank you so much! |
-| `thank_you_3.mp3` | |
-| `thank_you_5.mp3` | |
+| `thank_you_3.mp3` | Oh, you're so kind. |
+| `thank_you_5.mp3` | You're the best! |
 
-### Food & drink thank-you responses (4 — food and drink items only, combined with general pool)
+**Food & drink thank-yous (4)**
 
-| Filename | Phrase |
+| Filename | Says |
 |---|---|
-| `thank_you_food_1.mp3` | |
-| `thank_you_food_2.mp3` | |
-| `thank_you_food_3.mp3` | |
-| `thank_you_food_4.mp3` | |
+| `thank_you_food_1.mp3` | Yummy! |
+| `thank_you_food_2.mp3` | Mmm, lovely. |
+| `thank_you_food_3.mp3` | That's just what I wanted. |
+| `thank_you_food_4.mp3` | That's delicious! |
 
-### Sleep & comfort thank-you responses (3 — soft "comfy" lines)
+**Comfy thank-yous (3 — sleep items play these alone; comfort items combine them with the general pool)**
 
-For **sleep** items these play *alone* (no excited general lines — the character is asleep). For **comfort** items they're combined with the general pool.
-
-| Filename | Phrase |
+| Filename | Says |
 |---|---|
-| `thank_you_comfy_1.mp3` | |
-| `thank_you_comfy_2.mp3` | |
-| `thank_you_comfy_3.mp3` | |
+| `thank_you_comfy_1.mp3` | Ah, nice and comfy. |
+| `thank_you_comfy_2.mp3` | Aww, nice and comfy. |
+| `thank_you_comfy_3.mp3` | Mmm, nice and soft. |
 
-### Toys thank-you responses (1 — play category items only, combined with general pool)
+**Toys thank-you (1)**
 
-| Filename | Phrase |
+| Filename | Says |
 |---|---|
-| `thank_you_toys_1.mp3` | |
+| `thank_you_toys_1.mp3` | Yay! That's fun! |
 
-### Wrong answer responses (4 — plays on first wrong attempt)
+**Wrong answer (4)**
 
-| Filename | Phrase |
+| Filename | Says |
 |---|---|
-| `wrong_1.mp3` | |
-| `wrong_2.mp3` | |
-| `wrong_3.mp3` | |
-| `wrong_4.mp3` | |
+| `wrong_1.mp3` | Hmm, not quite. |
+| `wrong_2.mp3` | No, thank you. |
+| `wrong_3.mp3` | No, thank you. |
+| `wrong_4.mp3` | Not that one. |
 
-### Sleepy preamble (3 — plays before blanket/pillow request, 50% chance)
+**Sleepy preamble (3)**
 
-| Filename | Phrase |
+| Filename | Says |
 |---|---|
-| `sleepy_1.mp3` | *(soft yawn)* I'm so sleepy. |
-| `sleepy_2.mp3` | It's nearly nap time. |
-| `sleepy_3.mp3` | |
+| `sleepy_1.mp3` | I'm so sleepy. |
+| `sleepy_2.mp3` | I'm so sleepy. |
+| `sleepy_3.mp3` | I'm really tired. |
 
-### Character selection (3)
+**Character selection — "chosen" (3, cycle in order)**
 
-| Filename | Phrase | Notes |
-|---|---|---|
-| `chosen.mp3` | Yay! Let's play! | Cycles in order through all 3 |
-| `chosen_2.mp3` | Hooray! Let's go! | |
-| `chosen_3.mp3` | Wonderful! Let's play! | |
+| Filename | Says |
+|---|---|
+| `chosen.mp3` | Yay! Let's play! |
+| `chosen_2.mp3` | Yay, let's play! |
+| `chosen_3.mp3` | Hi, let's play together. |
 
-### Tray complete (1)
+**Tray complete (1)**
 
-| Filename | Phrase |
+| Filename | Says |
 |---|---|
 | `all_done.mp3` | All done! Let's play again! |
 
+### Catch mini-game (2)
+
+| Filename | Says |
+|---|---|
+| `boing_1.mp3` | *(sound effect — ball bounce)* |
+| `boing_2.mp3` | *(sound effect — ball bounce)* |
+
+### Tidy Time mini-game (12)
+
+| Filename | Says |
+|---|---|
+| `tidy_chosen_1.mp3` | It's tidy time! |
+| `tidy_chosen_2.mp3` | Time to tidy up! |
+| `tidy_chosen_3.mp3` | Let's put all the toys away nicely. |
+| `item_name_ball.mp3` | Ball. |
+| `item_name_book.mp3` | Book. |
+| `item_name_blocks.mp3` | Blocks. |
+| `item_name_car.mp3` | Car. |
+| `item_name_teddy.mp3` | Teddy. |
+| `in_it_goes_1.mp3` | In it goes. |
+| `in_it_goes_2.mp3` | What about that one? *(also wobbles a random remaining toy)* |
+| `next_one_1.mp3` | Next one! |
+| `well_done_1.mp3` | Well done. *(reusable praise line; also in the Tidy "in it goes" pool)* |
+
+> Naming note: toy names use `item_name_*` (generic, reusable), not `tidy_name_*`. The Catch bounce uses `boing_1` / `boing_2` (random of two), not a single `boing`.
+
 ---
 
-## Images (34 files)
+## ⛔ Audio still to make
 
-### Background (1)
+### Catch mini-game — full voice set (14) *(game currently runs silent/on timers)*
 
-| Filename | Format | Description |
-|---|---|---|
-| `bg_room` | .webp | Cosy children's bedroom interior. Soft pastel walls, fluffy rug, small bed in the background. Warm daylight. Centre upper area clear for the character, lower quarter clear for the item tray. |
+| Filename | Suggested line |
+|---|---|
+| `play_invite_1.mp3` | What shall we play? |
+| `play_invite_2.mp3` | What shall we play now? |
+| `play_invite_3.mp3` | Ooh, let's play together! What shall we do? |
+| `play_catch_1.mp3` | Let's play catch! |
+| `play_catch_2.mp3` | Yay, catch! Throw the ball to me! |
+| `catch_excite_1.mp3` | Got it! |
+| `catch_excite_2.mp3` | I caught it! Yay! |
+| `catch_excite_3.mp3` | Lovely throw! |
+| `player_catch_1.mp3` | Good catch! |
+| `player_catch_2.mp3` | Well done! Catch! |
+| `player_catch_3.mp3` | Your turn! Throw it back! |
+| `play_tired_1.mp3` | Phew, I'm tired! That was fun. |
+| `play_tired_2.mp3` | That was lovely. Let's have a little rest. |
+| `play_tired_3.mp3` | I had so much fun. Shall we do something else now? |
 
-### Characters (18 — 3 characters × 6 emotions)
+*(Until recorded, the character-catch moment reuses `thank_you_toys_1`.)*
 
-All characters: soft cartoon style, seated facing forward, transparent background, 800×800px. **All character images are now WebP** (the PNG originals were removed). Every character has the full six-emotion set, so all reward faces work for all characters.
+### Tidy Time mini-game — voice (6 needed + 2 optional)
 
-| Filename | Format | Description |
-|---|---|---|
-| `dolly_neutral` | .webp | Cute soft rag doll, yarn hair, simple dress, friendly neutral expression with a small smile. |
-| `dolly_needy` | .webp | Same dolly, small pout and big sad puppy eyes. |
-| `dolly_happy` | .webp | Same dolly, big open smile, rosy cheeks, sparkly eyes. |
-| `dolly_sleepy` | .webp | Same dolly, drooping eyelids, small relaxed smile, hand near cheek. |
-| `dolly_sleeping` | .webp | Same dolly, eyes closed, fully asleep. |
-| `dolly_jumping` | .webp | Same dolly, excited jumping pose. |
-| `giraffe_neutral` | .webp | Stuffed-toy style giraffe, long neck, soft yellow with pale brown spots, gentle neutral expression. |
-| `giraffe_needy` | .webp | Same giraffe, pouty mouth, big sad eyes. |
-| `giraffe_happy` | .webp | Same giraffe, big smile, sparkly eyes, rosy cheeks. |
-| `giraffe_sleepy` | .webp | Same giraffe, drooping eyelids, soft sleepy smile. |
-| `giraffe_sleeping` | .webp | Same giraffe, eyes closed, fully asleep. |
-| `giraffe_jumping` | .webp | Same giraffe, excited jumping pose. |
-| `bunny_neutral` | .webp | Cuddly stuffed bunny, long floppy ears, neutral happy expression. |
-| `bunny_needy` | .webp | Same bunny, pouty mouth, big sad eyes. |
-| `bunny_happy` | .webp | Same bunny, big smile, sparkly eyes, rosy cheeks. |
-| `bunny_sleepy` | .webp | Same bunny, drooping eyelids, soft sleepy smile, ears flopping slightly forward. |
-| `bunny_sleeping` | .webp | Same bunny, eyes closed, fully asleep. |
-| `bunny_jumping` | .webp | Same bunny, excited jumping pose. |
+| Filename | Suggested line |
+|---|---|
+| `tidy_opening_1.mp3` | Let's tidy up! Put all the toys away in the toy box. |
+| `tidy_opening_2.mp3` | Look at all these toys! Let's pop them in the box. |
+| `tidy_oops_1.mp3` | Oopsie! Try again! |
+| `tidy_oops_2.mp3` | Almost! Pop it in the box. |
+| `all_tidy_1.mp3` | All nice and clean! Well done! |
+| `all_tidy_2.mp3` | Hooray, all tidy! Thank you so much! |
+| `in_it_goes_3.mp3` *(optional)* | Get the other one too! |
+| `next_one_2.mp3` *(optional, `next_one` not wired yet)* | Keep going! |
 
-### Items (15)
-
-All items: transparent background, single object centred, soft cartoon style, 238×238px, .png.
+### Sound effects (2 — currently synthesized in code)
 
 | Filename | Description |
 |---|---|
-| `item_apple` | Round red apple with a green leaf. (.webp) |
-| `item_yogurt` | Small yogurt pot with a spoon, pastel colours. |
-| `item_banana` | Bright yellow banana, slightly curved. |
-| `item_sandwich` | Cute triangular sandwich, soft bread, simple filling visible. |
-| `item_biscuit` | Round biscuit with chocolate chips. |
-| `item_water` | Clear sippy cup or glass with blue water and a straw. |
-| `item_milk` | Glass or sippy cup filled with white milk. |
-| `item_juice` | Cup of orange juice with a straw. |
-| `item_blanket` | Folded soft pastel blanket, cosy looking. |
-| `item_pillow` | Small fluffy pillow, pastel coloured. |
-| `item_teddy` | Small toy teddy bear, classic brown, cute and cuddly. |
-| `item_book` | Closed children's picture book with a colourful cover. |
-| `item_ball` | Bright beach ball with simple colour panels. |
-| `item_blocks` | Small stack of wooden alphabet building blocks. |
-| `item_car` | Small chunky toy car in bright primary colours. |
+| `plop.mp3` | Soft mid-range "plop"/"thunk" for a toy landing in the box. Heard many times — must stay pleasant on repeat. *(Synth fallback in use.)* |
+| `celebrate.mp3` | Short celebratory sparkle/chime for the all-tidy star burst. *(Synth fallback in use.)* |
+
+### Optional polish
+
+| Filename | Description |
+|---|---|
+| `thank_you_toys_2–4.mp3` | More toy thank-yous so play-category rewards have the variety food/comfort already have. |
 
 ---
 
-## To make / still needed
+# IMAGES
 
-- **More toy thank-you responses.** There is currently only one (`thank_you_toys_1.mp3`), so play-category rewards have far less variety than food or comfort. Add `thank_you_toys_2–4.mp3` in the same warm voice (e.g. "Yay, let's play!", "This is so much fun!", "I love playing with you!") so toys match the other categories. BootScene loads the whole `thankYouToys` array automatically once they're added to `phrases.js`.
-- **PWA icon.** A proper 512×512 PNG showing all three characters together on the `#F2E4D4` background. Currently falls back to `dolly_happy`.
+## ✅ Images we have (36 files)
+
+### Background (1)
+- `bg_room.webp` — cosy bedroom: pastel walls, round fluffy rug (top ~53%, bottom ~68%), bookshelf + baskets left, cushion + teddy right, clear foreground floor. Wall/floor line ~50%.
+
+### Characters (18 — 3 × 6 emotions, all `.webp`, ~800×800, transparent)
+- `dolly_neutral`, `dolly_needy`, `dolly_happy`, `dolly_sleepy`, `dolly_sleeping`, `dolly_jumping`
+- `giraffe_neutral`, `giraffe_needy`, `giraffe_happy`, `giraffe_sleepy`, `giraffe_sleeping`, `giraffe_jumping`
+- `bunny_neutral`, `bunny_needy`, `bunny_happy`, `bunny_sleepy`, `bunny_sleeping`, `bunny_jumping`
+
+### Items (15 — transparent, 238×238; `.png` except apple)
+- `item_apple.webp`
+- `item_yogurt.png`, `item_banana.png`, `item_sandwich.png`, `item_biscuit.png`
+- `item_water.png`, `item_milk.png`, `item_juice.png`
+- `item_blanket.png`, `item_pillow.png`, `item_teddy.png`
+- `item_book.png`, `item_ball.png`, `item_blocks.png`, `item_car.png`
+
+### Tidy Time (2 — 238×238 `.png`, transparent)
+- `toy_box_closed.png` — open-top toy box with the lid/flaps closed. Used as the mini-game **select tile** and the box's resting state.
+- `toy_box_open.png` — same box, open and ready to receive toys. Shown during play.
+
+> The celebration **stars are generated in code** (no image asset needed).
+
+## ⛔ Images still to make
+
+| Filename | Description |
+|---|---|
+| App icon (e.g. `icon_512.png`) | Proper **512×512** PWA icon — all three characters together on the `#F2E4D4` background. Currently `manifest.json` falls back to `dolly_happy`. |
+
+*(No other images are outstanding — the Catch and Tidy mini-games reuse existing art.)*
+
+---
 
 ## Notes
 
-- **UK English throughout.** All phrases use UK spellings and word choices. Keep this consistent if anything is re-recorded.
-- **Voice consistency.** All phrases were generated with the same voice settings. If re-recording any file, match the same voice to avoid jarring inconsistency.
-- **WebP vs PNG.** Some images have been converted to WebP for faster loading. The game loads the correct format automatically — do not rename files without updating BootScene.js.
+- **UK English throughout.** Keep spellings/word choices consistent if anything is re-recorded.
+- **Voice consistency.** Match the same narrator voice/settings on any new or re-recorded clip.
+- **Auto-loading.** BootScene loads every key declared in `PHRASES` (and the `MINIGAMES` images) automatically — drop a new file in `assets/audio` or `assets/images` and add its key to `data/phrases.js` / `data/minigames.js`.
+- **WebP vs PNG.** The game picks the correct format per asset; don't rename without updating `BootScene.js`.
+- **Offline (PWA).** When the remaining audio lands, add the new paths to `sw.js` `ASSETS` and bump `CACHE_NAME` so installed apps pre-cache them for offline play.
