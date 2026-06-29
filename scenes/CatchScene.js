@@ -108,6 +108,8 @@ class CatchScene extends Phaser.Scene {
             this.releaseThrow(pts);
         });
 
+        addDoorButton(this);   // hold-to-exit, same as the main game
+
         // Short silent opening beat so the ball isn't live the instant the scene
         // appears (the "let's play catch!" line was already spoken on the select
         // screen). Then the child can throw.
@@ -259,7 +261,11 @@ class CatchScene extends Phaser.Scene {
     endGame() {
         this.phase = 'ended';
         this.setCharEmotion('sleepy');
-        this.queueAudio(Phaser.Utils.Array.GetRandom(PHRASES.playTired));
+        // Tired line if recorded, otherwise a real sleepy line ("I'm so sleepy" /
+        // "I'm really tired") so the sleepy face is never silent.
+        let pool = PHRASES.playTired.filter(k => this.cache.audio.exists(k));
+        if (pool.length === 0) pool = PHRASES.sleepy.filter(k => this.cache.audio.exists(k));
+        this.queueAudio(pool.length ? Phaser.Utils.Array.GetRandom(pool) : null);
         this.queueThen(() => this.time.delayedCall(900, () => {
             this.scene.start('PlayScene', { characterId: this.characterId, fromMinigame: true });
         }));

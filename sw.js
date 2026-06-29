@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tcm-v6';
+const CACHE_NAME = 'tcm-v7';
 
 const ASSETS = [
     './',
@@ -7,6 +7,7 @@ const ASSETS = [
     './data/characters.js',
     './data/phrases.js',
     './data/minigames.js',
+    './scenes/doorButton.js',
     './scenes/BootScene.js',
     './scenes/SelectScene.js',
     './scenes/PlayScene.js',

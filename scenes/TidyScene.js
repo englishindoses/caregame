@@ -88,6 +88,7 @@ class TidyScene extends Phaser.Scene {
         this.buildNameText();
         this.spawnToys();
         this.setupDrag();
+        addDoorButton(this);   // hold-to-exit, same as the main game
 
         // In-scene opening, while the toys drop in (tidy_chosen_2 / _3, cycled).
         this.playVoice(PHRASES.nextTidyOpening());

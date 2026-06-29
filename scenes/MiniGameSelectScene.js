@@ -56,6 +56,7 @@ class MiniGameSelectScene extends Phaser.Scene {
         }
 
         this.buildTiles();
+        addDoorButton(this);   // hold-to-exit, same as the main game
 
         // Invite audio on entry; input stays locked until it finishes.
         this.queueAudio(Phaser.Utils.Array.GetRandom(PHRASES.playInvite));
