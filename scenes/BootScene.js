@@ -68,19 +68,29 @@ class BootScene extends Phaser.Scene {
     }
 
     create() {
-        // Dev shortcut: open index.html?mini to jump straight to the mini-game
-        // select screen (skips clearing 3 trays). Remove before release.
-        if (new URLSearchParams(window.location.search).has('mini')) {
-            const charId = localStorage.getItem('tcm_character') || 'dolly';
-            this.scene.start('MiniGameSelectScene', { characterId: charId });
-            return;
-        }
+        const route = () => {
+            // Dev shortcut: open index.html?mini to jump straight to the mini-game
+            // select screen (skips clearing 3 trays). Remove before release.
+            if (new URLSearchParams(window.location.search).has('mini')) {
+                const charId = localStorage.getItem('tcm_character') || 'dolly';
+                this.scene.start('MiniGameSelectScene', { characterId: charId });
+                return;
+            }
 
-        const saved = localStorage.getItem('tcm_character');
-        if (saved) {
-            this.scene.start('PlayScene', { characterId: saved });
+            const saved = localStorage.getItem('tcm_character');
+            if (saved) {
+                this.scene.start('PlayScene', { characterId: saved });
+            } else {
+                this.scene.start('SelectScene');
+            }
+        };
+
+        // Phaser draws text to a canvas, so the web font must be loaded before any
+        // scene renders with it. Wait for it, but never block boot if it fails.
+        if (document.fonts && document.fonts.load) {
+            document.fonts.load('700 40px "Quicksand"').then(route, route);
         } else {
-            this.scene.start('SelectScene');
+            route();
         }
     }
 }

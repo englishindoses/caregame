@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tcm-v5';
+const CACHE_NAME = 'tcm-v6';
 
 const ASSETS = [
     './',
@@ -14,6 +14,7 @@ const ASSETS = [
     './scenes/CatchScene.js',
     './scenes/TidyScene.js',
     './manifest.json',
+    './assets/fonts/quicksand-700.woff2',
 
     // Images – WebP (background + all characters)
     './assets/images/bg_room.webp',

@@ -198,7 +198,7 @@ class TidyScene extends Phaser.Scene {
 
     buildNameText() {
         this.nameText = this.add.text(this.W / 2, this.H * 0.34, '', {
-            fontFamily: 'Arial, sans-serif',
+            fontFamily: '"Quicksand", Arial, sans-serif',
             fontSize:   '88px',
             color:      '#ffffff',
             align:      'center',
@@ -309,7 +309,7 @@ class TidyScene extends Phaser.Scene {
 
         this.playPlop();
         this.playVoice(PHRASES.tidyName[obj.toyId]);   // names the toy, interrupts prior voice
-        this.showName(obj.toyId.charAt(0).toUpperCase() + obj.toyId.slice(1));
+        this.showName(obj.toyId);   // lowercase toy id: ball / book / blocks / car / teddy
 
         // Flash the box glow as a "received" cue.
         this.boxGlow.setAlpha(0.7);
