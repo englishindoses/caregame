@@ -55,6 +55,13 @@ class TidyScene extends Phaser.Scene {
         this._ending   = false;
         this._voice    = null;
 
+        this._dropsDone = 0;
+        // 2–3 of the first 4 drops get an extra encouragement voice before the name.
+        this._extraOnDrops = new Set(
+            Phaser.Utils.Array.Shuffle([1, 2, 3, 4]).slice(0, Phaser.Math.Between(2, 3))
+        );
+        this._extraBag = [];
+
         // Toys fall under gravity and rest on the floor at rug level. Open the
         // top of the world so they can rain in from above the screen.
         this.physics.world.setBounds(0, 0, W, this.FLOOR_Y);
@@ -388,8 +395,6 @@ class TidyScene extends Phaser.Scene {
         this.tweens.killTweensOf(obj);           // cancel any wobble in progress
 
         this.playPlop();
-        this.playVoice(PHRASES.tidyName[obj.toyId]);   // names the toy, interrupts prior voice
-        this.showName(obj.toyId);   // lowercase toy id: ball / book / blocks / car / teddy
 
         // Flash the box glow as a "received" cue.
         this.boxGlow.setAlpha(0.7);
@@ -407,29 +412,43 @@ class TidyScene extends Phaser.Scene {
             onComplete: () => obj.destroy(),
         });
 
+        this._dropsDone++;
+        const dropNum = this._dropsDone;
+        const isLast  = this.remaining - 1 <= 0;
         this.remaining--;
-        if (this.remaining <= 0) {
-            this.finish();
+
+        // The toy name comes after the drop sound (not at the same time).
+        const sayName = () => {
+            this.playVoice(PHRASES.tidyName[obj.toyId]);
+            this.showName(obj.toyId);   // ball / book / blocks / car / teddy
+        };
+
+        if (!isLast && this._extraOnDrops.has(dropNum)) {
+            // An extra encouragement ("in it goes" / "well done") BEFORE the name.
+            const extra = this.nextExtraVoice();
+            this.time.delayedCall(250, () => {
+                if (extra === 'in_it_goes_2') {   // "what about that one?" — point to a remaining toy
+                    const left = this.toys.filter(t => t.active && t.body && t.body.enable);
+                    if (left.length) this.wobbleToy(Phaser.Utils.Array.GetRandom(left));
+                }
+                this.playVoiceThen(extra, sayName, 1100);
+            });
         } else {
-            // A beat after the toy name, sometimes encourage / point to another toy.
-            this.time.delayedCall(900, () => this.maybePrompt());
+            this.time.delayedCall(280, sayName);
         }
+
+        if (isLast) this.finish();
     }
 
-    // Occasionally play an encouragement after a drop. If it's the "and that one!"
-    // line, wobble a random remaining toy as if pointing to it — the child can
-    // drag that one, or any other; either is fine.
-    maybePrompt() {
-        if (this._ending || !this.toys) return;
-        const remaining = this.toys.filter(t => t.active && t.body && t.body.enable);
-        if (remaining.length === 0) return;
-        if (Math.random() > 0.5) return;   // not every drop — keeps the character present, not chatty
-
-        const key = Phaser.Utils.Array.GetRandom(PHRASES.inItGoes);
-        this.playVoice(key);
-        if (key === 'in_it_goes_2') {
-            this.wobbleToy(Phaser.Utils.Array.GetRandom(remaining));
+    // Shuffle-bag over the existing "in it goes" / "well done" lines, so the
+    // 2–3 extra voices in a game are varied.
+    nextExtraVoice() {
+        if (this._extraBag.length === 0) {
+            this._extraBag = Phaser.Utils.Array.Shuffle(
+                PHRASES.inItGoes.filter(k => this.cache.audio.exists(k))
+            );
         }
+        return this._extraBag.length ? this._extraBag.pop() : null;
     }
 
     wobbleToy(toy) {
@@ -457,10 +476,14 @@ class TidyScene extends Phaser.Scene {
         this.starBurst();
         this.playCelebrate();
 
-        // Let the celebration land, then the all-tidy line, then go back.
+        // End line with/just after the stars. Use all_tidy if recorded, otherwise
+        // fall back to the existing "all done" / "well done" clips so it's never silent.
         this.time.delayedCall(900, () => {
+            let pool = PHRASES.allTidy.filter(k => this.cache.audio.exists(k));
+            if (pool.length === 0) pool = ['all_done', 'well_done_1'].filter(k => this.cache.audio.exists(k));
+            const key = pool.length ? Phaser.Utils.Array.GetRandom(pool) : null;
             this.playVoiceThen(
-                Phaser.Utils.Array.GetRandom(PHRASES.allTidy),
+                key,
                 () => this.scene.start('PlayScene', { characterId: this.characterId, fromMinigame: true }),
                 1600
             );
