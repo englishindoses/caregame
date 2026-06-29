@@ -55,12 +55,8 @@ class TidyScene extends Phaser.Scene {
         this._ending   = false;
         this._voice    = null;
 
-        this._dropsDone = 0;
-        // 2–3 of the first 4 drops get an extra encouragement voice before the name.
-        this._extraOnDrops = new Set(
-            Phaser.Utils.Array.Shuffle([1, 2, 3, 4]).slice(0, Phaser.Math.Between(2, 3))
-        );
-        this._extraBag = [];
+        this._dragLocked   = false;   // gate toy dragging during a name reveal / the finale
+        this._revealActive = false;   // a dropped toy's name is on screen, waiting for a tap
 
         // Toys fall under gravity and rest on the floor at rug level. Open the
         // top of the world so they can rain in from above the screen.
@@ -281,29 +277,35 @@ class TidyScene extends Phaser.Scene {
     // ── Centre name text (reused for every drop) ──────────────────────────────
 
     buildNameText() {
-        this.nameText = this.add.text(this.W / 2, this.H * 0.34, '', {
+        this.nameText = this.add.text(this.W / 2, this.H * 0.5, '', {
             fontFamily: '"Quicksand", Arial, sans-serif',
-            fontSize:   '88px',
+            fontSize:   '260px',
             color:      '#ffffff',
             align:      'center',
             stroke:     '#000000',
-            strokeThickness: 9,
-        }).setOrigin(0.5).setDepth(15).setScale(0);
+            strokeThickness: 16,
+        }).setOrigin(0.5).setDepth(30).setScale(0);
     }
 
+    // Big centred name that hovers until the player taps (no auto-hide).
     showName(text) {
         this.tweens.killTweensOf(this.nameText);
-        this.nameText.setText(text).setScale(0);
+        this.nameText.setText(text).setScale(0).setVisible(true);
+        // Shrink to fit the width for the longer words (e.g. "blocks").
+        const maxW = this.W - 60;
+        this._nameFit = Math.min(1, maxW / Math.max(1, this.nameText.width));
+        this.tweens.add({ targets: this.nameText, scale: this._nameFit, duration: 240, ease: 'Back.easeOut' });
+    }
+
+    // Quick "pop" then vanish, on the player's tap.
+    popName() {
+        const s = this._nameFit || 1;
+        this.tweens.killTweensOf(this.nameText);
         this.tweens.add({
-            targets:  this.nameText,
-            scale:    1,
-            duration: 200,
-            ease:     'Back.easeOut',
-            onComplete: () => {
-                this.time.delayedCall(800, () => {
-                    this.tweens.add({ targets: this.nameText, scale: 0, duration: 200, ease: 'Back.easeIn' });
-                });
-            },
+            targets: this.nameText, scale: s * 1.3, duration: 110, ease: 'Quad.easeOut',
+            onComplete: () => this.tweens.add({
+                targets: this.nameText, scale: 0, duration: 140, ease: 'Back.easeIn',
+            }),
         });
     }
 
@@ -345,7 +347,7 @@ class TidyScene extends Phaser.Scene {
 
     setupDrag() {
         this.input.on('dragstart', (_p, obj) => {
-            if (this._ending) return;
+            if (this._ending || this._dragLocked) return;
             this.tweens.killTweensOf(obj);            // stop a wobble if this toy was being pointed at
             obj.setAngle(Phaser.Math.Between(-12, 12));
             if (obj.body) obj.body.enable = false;   // follow the finger, gravity off while held
@@ -354,7 +356,7 @@ class TidyScene extends Phaser.Scene {
         });
 
         this.input.on('drag', (_p, obj, dragX, dragY) => {
-            if (this._ending) return;
+            if (this._ending || this._dragLocked) return;
             obj.setPosition(dragX, dragY);
             this.applyPerspective(obj, 1.12);         // grows as it's pulled lower (closer)
             // Light up the box when the toy is over it.
@@ -363,7 +365,7 @@ class TidyScene extends Phaser.Scene {
         });
 
         this.input.on('dragend', (_p, obj) => {
-            if (this._ending) return;
+            if (this._ending || this._dragLocked) return;
             this.boxGlow.setAlpha(0);
             const dist = Phaser.Math.Distance.Between(obj.x, obj.y, this.boxX, this.boxY);
             if (dist < this.BOX_RADIUS) {
@@ -389,66 +391,91 @@ class TidyScene extends Phaser.Scene {
     }
 
     dropInBox(obj) {
-        if (obj.body) obj.body.enable = false;   // no physics while it tweens into the box
+        if (obj.body) obj.body.enable = false;
         obj.disableInteractive();
         this.input.setDraggable(obj, false);
-        this.tweens.killTweensOf(obj);           // cancel any wobble in progress
+        this.tweens.killTweensOf(obj);
 
         this.playPlop();
-
-        // Flash the box glow as a "received" cue.
         this.boxGlow.setAlpha(0.7);
         this.tweens.add({ targets: this.boxGlow, alpha: 0, duration: 300 });
 
-        // Toy shrinks into the box and is destroyed.
+        const isLast = this.remaining - 1 <= 0;
+        this.remaining--;
+        this._dragLocked   = true;     // freeze the other toys during the reveal
+        this._revealToy    = obj;
+        this._revealIsLast = isLast;
+
+        // Lift the dropped toy onto the box and hold it visible.
         this.tweens.add({
             targets:  obj,
             x:        this.boxX,
-            y:        this.boxY - this.BOX_SIZE * 0.1,
-            scale:    0,
-            angle:    obj.angle + Phaser.Math.Between(-90, 90),
-            duration: 300,
-            ease:     'Quad.easeIn',
-            onComplete: () => obj.destroy(),
+            y:        this.boxY - this.BOX_SIZE * 0.22,
+            scale:    obj.unitScale * 1.15,
+            angle:    0,
+            duration: 280,
+            ease:     'Back.easeOut',
         });
 
-        this._dropsDone++;
-        const dropNum = this._dropsDone;
-        const isLast  = this.remaining - 1 <= 0;
-        this.remaining--;
-
-        // The toy name comes after the drop sound (not at the same time).
-        const sayName = () => {
+        // Show the big centred name + speak it, then wait for a tap to continue.
+        const reveal = () => {
+            this.showName(obj.toyId);
             this.playVoice(PHRASES.tidyName[obj.toyId]);
-            this.showName(obj.toyId);   // ball / book / blocks / car / teddy
+            this._revealActive = true;
+            this.input.once('pointerdown', () => this.resolveReveal());
         };
 
-        if (!isLast && this._extraOnDrops.has(dropNum)) {
-            // An extra encouragement ("in it goes" / "well done") BEFORE the name.
-            const extra = this.nextExtraVoice();
-            this.time.delayedCall(250, () => {
-                if (extra === 'in_it_goes_2') {   // "what about that one?" — point to a remaining toy
-                    const left = this.toys.filter(t => t.active && t.body && t.body.enable);
-                    if (left.length) this.wobbleToy(Phaser.Utils.Array.GetRandom(left));
-                }
-                this.playVoiceThen(extra, sayName, 1100);
-            });
+        if (!isLast && this.cache.audio.exists('in_it_goes_1')) {
+            this.playVoiceThen('in_it_goes_1', reveal, 1100);   // "in it goes" before the name
         } else {
-            this.time.delayedCall(280, sayName);
+            this.time.delayedCall(280, reveal);                 // final item: the name comes up first
         }
-
-        if (isLast) this.finish();
     }
 
-    // Shuffle-bag over the existing "in it goes" / "well done" lines, so the
-    // 2–3 extra voices in a game are varied.
-    nextExtraVoice() {
-        if (this._extraBag.length === 0) {
-            this._extraBag = Phaser.Utils.Array.Shuffle(
-                PHRASES.inItGoes.filter(k => this.cache.audio.exists(k))
-            );
+    // Player tapped while a name is showing — pop the name + toy and move on.
+    resolveReveal() {
+        if (!this._revealActive) return;
+        this._revealActive = false;
+
+        const toy    = this._revealToy;
+        const isLast = this._revealIsLast;
+        this.popName();
+        if (toy && toy.active) this.popToy(toy);
+
+        if (isLast) {
+            // Final: box closes, stars + sound, then the "all done" line, then exit.
+            this._ending = true;
+            this.time.delayedCall(220, () => {
+                this.closeBox();
+                this.setCharEmotion('jumping');
+                this.pulse(this.charSprite, 1.18);
+                this.starBurst();
+                this.playCelebrate();
+                this.time.delayedCall(900, () => this.playEndLine());
+            });
+        } else {
+            // Re-allow dragging after this tap's event; then "what about that one?"
+            // once the name has gone, pointing to a remaining toy.
+            this.time.delayedCall(60, () => { this._dragLocked = false; });
+            this.time.delayedCall(280, () => {
+                if (this._ending) return;
+                const left = this.toys.filter(t => t.active && t.body && t.body.enable);
+                this.playVoice('in_it_goes_2');
+                if (left.length) this.wobbleToy(Phaser.Utils.Array.GetRandom(left));
+            });
         }
-        return this._extraBag.length ? this._extraBag.pop() : null;
+    }
+
+    popToy(toy) {
+        this.tweens.killTweensOf(toy);
+        const s = toy.scaleX || 1;
+        this.tweens.add({
+            targets: toy, scale: s * 1.4, duration: 110, ease: 'Quad.easeOut',
+            onComplete: () => this.tweens.add({
+                targets: toy, scale: 0, alpha: 0, duration: 130, ease: 'Back.easeIn',
+                onComplete: () => toy.destroy(),
+            }),
+        });
     }
 
     wobbleToy(toy) {
@@ -468,26 +495,17 @@ class TidyScene extends Phaser.Scene {
 
     // ── Ending ────────────────────────────────────────────────────────────────
 
-    finish() {
-        this._ending = true;
-        this.closeBox();
-        this.setCharEmotion('jumping');
-        this.pulse(this.charSprite, 1.18);
-        this.starBurst();
-        this.playCelebrate();
-
-        // End line with/just after the stars. Use all_tidy if recorded, otherwise
-        // fall back to the existing "all done" / "well done" clips so it's never silent.
-        this.time.delayedCall(900, () => {
-            let pool = PHRASES.allTidy.filter(k => this.cache.audio.exists(k));
-            if (pool.length === 0) pool = ['all_done', 'well_done_1'].filter(k => this.cache.audio.exists(k));
-            const key = pool.length ? Phaser.Utils.Array.GetRandom(pool) : null;
-            this.playVoiceThen(
-                key,
-                () => this.scene.start('PlayScene', { characterId: this.characterId, fromMinigame: true }),
-                1600
-            );
-        });
+    // Final "all done" after the stars, then back to the main game. Uses all_tidy
+    // if recorded, otherwise the existing all_done / well_done_1 so it's never silent.
+    playEndLine() {
+        let pool = PHRASES.allTidy.filter(k => this.cache.audio.exists(k));
+        if (pool.length === 0) pool = ['all_done', 'well_done_1'].filter(k => this.cache.audio.exists(k));
+        const key = pool.length ? Phaser.Utils.Array.GetRandom(pool) : null;
+        this.playVoiceThen(
+            key,
+            () => this.scene.start('PlayScene', { characterId: this.characterId, fromMinigame: true }),
+            1600
+        );
     }
 
     // ── Audio (interrupt-based, no input locking in this scene) ───────────────
