@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tcm-v4';
+const CACHE_NAME = 'tcm-v5';
 
 const ASSETS = [
     './',
@@ -132,17 +132,39 @@ self.addEventListener('activate', event => {
     );
 });
 
+// Code (HTML + JS) is served network-first so updates appear immediately when
+// online, with the cache as an offline fallback. Images and audio are served
+// cache-first (fast, and they only change when CACHE_NAME is bumped).
 self.addEventListener('fetch', event => {
-    event.respondWith(
-        caches.match(event.request).then(cached => {
-            if (cached) return cached;
-            return fetch(event.request).then(response => {
-                if (response && response.ok && event.request.method === 'GET') {
-                    caches.open(CACHE_NAME)
-                        .then(cache => cache.put(event.request, response.clone()));
-                }
-                return response;
-            });
-        })
-    );
+    if (event.request.method !== 'GET') return;
+
+    const url    = new URL(event.request.url);
+    const isCode = event.request.mode === 'navigate' || /\.(?:js|html)$/.test(url.pathname);
+
+    if (isCode) {
+        event.respondWith(
+            fetch(event.request)
+                .then(response => {
+                    if (response && response.ok) {
+                        const clone = response.clone();
+                        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+                    }
+                    return response;
+                })
+                .catch(() => caches.match(event.request))
+        );
+    } else {
+        event.respondWith(
+            caches.match(event.request).then(cached => {
+                if (cached) return cached;
+                return fetch(event.request).then(response => {
+                    if (response && response.ok) {
+                        const clone = response.clone();
+                        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+                    }
+                    return response;
+                });
+            })
+        );
+    }
 });
