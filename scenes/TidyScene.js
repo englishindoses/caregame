@@ -38,8 +38,10 @@ class TidyScene extends Phaser.Scene {
         this.boxX        = W / 2;
         this.boxY        = H * 0.87;   // toy box on the open foreground floor
         this.BOX_SIZE    = W * 0.40;
-        this.BOX_RADIUS  = Math.max(175, this.BOX_SIZE * 0.6);  // generous — a toddler won't aim precisely
-        this.FLOOR_Y     = H * 0.72;   // toys fall under gravity and rest here, around rug level
+        this.BOX_RADIUS  = Math.max(155, this.BOX_SIZE * 0.55);  // generous, but clear of resting toys
+        this.RUG_TOP     = H * 0.58;   // toys scatter across the rug, each resting at its...
+        this.RUG_BOTTOM  = H * 0.72;   // ...own level between these heights (with depth scaling)
+        this.FLOOR_Y     = H * 0.80;   // world-floor safety net below the rug band
         this.TOY_TARGET  = W * 0.18;
 
         this.remaining = this.toyDefs.length;
@@ -67,6 +69,21 @@ class TidyScene extends Phaser.Scene {
 
         // Opening line interrupts straight away (silent until recorded).
         this.playVoice(Phaser.Utils.Array.GetRandom(PHRASES.tidyOpening));
+    }
+
+    update() {
+        if (!this.toys) return;
+        // Stop each falling toy at its own rug level so they scatter across the
+        // rug instead of piling onto one floor line.
+        for (const toy of this.toys) {
+            if (!toy.active || !toy.body || !toy.body.enable || toy.landed) continue;
+            if (toy.body.velocity.y >= 0 && toy.y >= toy.restY) {
+                toy.y = toy.restY;
+                toy.setVelocity(0, 0);
+                toy.body.setAllowGravity(false);
+                toy.landed = true;
+            }
+        }
     }
 
     // ── Character ─────────────────────────────────────────────────────────────
@@ -190,18 +207,27 @@ class TidyScene extends Phaser.Scene {
         const n = this.toyDefs.length;
         this.toyDefs.forEach((def, i) => {
             // Spread across the width and stack above the screen so they rain
-            // down and settle on the floor under gravity.
+            // down. Each toy gets its own rest height in the rug band, so they
+            // scatter across the rug rather than landing in one line.
             const t = n === 1 ? 0.5 : i / (n - 1);
             const x = Phaser.Math.Linear(this.W * 0.16, this.W * 0.84, t) + Phaser.Math.Between(-30, 30);
+            const restY = Phaser.Math.Between(this.RUG_TOP, this.RUG_BOTTOM);
 
-            const toy = this.physics.add.image(x, -150 - i * 130, def.img).setDepth(7);
-            const base = (this.TOY_TARGET / Math.max(toy.width, toy.height)) * Phaser.Math.FloatBetween(0.95, 1.1);
+            // Depth: lower (nearer) toys rest bigger and draw in front.
+            const yFrac = (restY - this.RUG_TOP) / (this.RUG_BOTTOM - this.RUG_TOP);
+            const persp = Phaser.Math.Linear(0.82, 1.12, yFrac);
+
+            const toy = this.physics.add.image(x, -150 - i * 130, def.img);
+            const base = (this.TOY_TARGET / Math.max(toy.width, toy.height)) * persp;
             toy.baseScale = base;
             toy.toyId     = def.id;
+            toy.restY     = restY;
+            toy.landed    = false;
             toy.setScale(base);
+            toy.setDepth(7 + yFrac * 4);
             toy.setAngle(Phaser.Math.Between(-15, 15));
             toy.setCollideWorldBounds(true);
-            toy.setBounce(0.2);
+            toy.setBounce(0.15);
             toy.setDragX(200);                       // settle horizontally, don't slide
             toy.setInteractive({ useHandCursor: true });
             this.input.setDraggable(toy);
@@ -235,11 +261,13 @@ class TidyScene extends Phaser.Scene {
             if (dist < this.BOX_RADIUS) {
                 this.dropInBox(obj);
             } else {
-                // Dropped in the air → gravity pulls it back down to the floor.
+                // Dropped in the air → gravity pulls it back down to its rug level.
                 obj.setScale(obj.baseScale);
                 if (obj.body) {
                     obj.body.enable = true;
+                    obj.body.setAllowGravity(true);
                     obj.setVelocity(0, 0);
+                    obj.landed = false;
                 }
                 if (Math.random() < 0.4) this.playVoice(Phaser.Utils.Array.GetRandom(PHRASES.tidyOops));
             }
