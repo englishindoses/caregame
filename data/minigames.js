@@ -14,6 +14,7 @@ const MINIGAMES = [
         id:          'tidy',
         name:        'Tidy',
         image:       'toy_box_closed',
+        tileScale:   1.4,           // draw the box tile bigger than the default
         chosenGroup: 'tidyChosen',
         scene:       'TidyScene',
     },

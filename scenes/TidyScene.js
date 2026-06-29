@@ -36,8 +36,8 @@ class TidyScene extends Phaser.Scene {
         this.charX       = W / 2;
         this.charY       = H * 0.40;   // exact same spot as the Catch mini-game
         this.boxX        = W / 2;
-        this.boxY        = H * 0.87;   // toy box on the open foreground floor
-        this.BOX_SIZE    = W * 0.40;
+        this.boxY        = H * 0.84;   // toy box on the open foreground floor
+        this.BOX_SIZE    = W * 0.50;
         this.BOX_RADIUS  = Math.max(155, this.BOX_SIZE * 0.55);  // generous, but clear of resting toys
         // RUG_TOP is set from the character's feet once the sprite exists (see below).
         this.RUG_BOTTOM  = H * 0.63;   // raised bottom edge of the toy zone — toys rest above this
@@ -49,7 +49,7 @@ class TidyScene extends Phaser.Scene {
         this.PERSP_NEAR_Y = H * 0.92;
         this.PERSP_MIN    = 0.70;
         this.PERSP_MAX    = 1.30;
-        this.TOY_TARGET  = W * 0.21;
+        this.TOY_TARGET  = W * 0.24;
 
         this.remaining = this.toyDefs.length;
         this._ending   = false;
@@ -80,8 +80,8 @@ class TidyScene extends Phaser.Scene {
         this.spawnToys();
         this.setupDrag();
 
-        // Opening line interrupts straight away (silent until recorded).
-        this.playVoice(Phaser.Utils.Array.GetRandom(PHRASES.tidyOpening));
+        // In-scene opening, while the toys drop in (tidy_chosen_2 / _3, cycled).
+        this.playVoice(PHRASES.nextTidyOpening());
     }
 
     update() {
@@ -214,8 +214,8 @@ class TidyScene extends Phaser.Scene {
         if (this.textures.exists('star_particle')) return;
         const g = this.make.graphics({ add: false });
         g.fillStyle(0xffffff, 1);
-        g.fillPoints(this.starPoints(22, 22, 5, 20, 9), true);
-        g.generateTexture('star_particle', 44, 44);
+        g.fillPoints(this.starPoints(32, 32, 5, 30, 13), true);
+        g.generateTexture('star_particle', 64, 64);
         g.destroy();
     }
 
@@ -237,7 +237,7 @@ class TidyScene extends Phaser.Scene {
             angle:    { min: 0, max: 360 },
             gravityY: 650,
             lifespan: 1200,
-            scale:    { start: 1.0, end: 0 },
+            scale:    { start: 1.5, end: 0 },
             rotate:   { min: 0, max: 360 },
             tint:     colors,
             emitting: false,

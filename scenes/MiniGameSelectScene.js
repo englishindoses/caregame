@@ -93,7 +93,7 @@ class MiniGameSelectScene extends Phaser.Scene {
         let target, baseScale;
         if (this.textures.exists(game.image)) {
             target = this.add.image(x, y, game.image).setDepth(6);
-            baseScale = (TILE * 0.85) / Math.max(target.width, target.height);
+            baseScale = (TILE * 0.85 * (game.tileScale || 1)) / Math.max(target.width, target.height);
             target.setScale(baseScale);
         } else {
             // Placeholder coloured box until the real tile art exists.

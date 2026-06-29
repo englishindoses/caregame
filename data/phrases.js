@@ -15,8 +15,8 @@ const PHRASES = {
     playTired:     ['play_tired_1', 'play_tired_2', 'play_tired_3'],      // 5 catches done, wind down
 
     // ── Tidy Time mini-game ──────────────────────────────────────────────────
-    tidyChosen:    ['tidy_chosen_1', 'tidy_chosen_2', 'tidy_chosen_3'],   // tapped the toy-box tile
-    tidyOpening:   ['tidy_opening_1', 'tidy_opening_2'],   // scene entry
+    tidyChosen:    ['tidy_chosen_1'],                     // tapped the toy-box tile (always this one)
+    tidyOpening:   ['tidy_chosen_2', 'tidy_chosen_3'],    // in-scene, while the toys drop in (cycled — see nextTidyOpening)
     tidyName: {                                            // spoken as each toy drops in (keyed by toy id)
         ball:   'item_name_ball',
         book:   'item_name_book',
@@ -37,5 +37,16 @@ const PHRASES = {
         const key = this.chosen[this._chosenIdx % this.chosen.length];
         this._chosenIdx++;
         return key;
+    },
+
+    // Shuffle-bag over the Tidy opening lines (tidy_chosen_2 / _3): random order,
+    // but both are used before either repeats.
+    _tidyOpenBag: [],
+    nextTidyOpening() {
+        if (this._tidyOpenBag.length === 0) {
+            this._tidyOpenBag = this.tidyOpening.slice();
+            if (Math.random() < 0.5) this._tidyOpenBag.reverse();
+        }
+        return this._tidyOpenBag.shift();
     },
 };
