@@ -10,5 +10,12 @@ const MINIGAMES = [
         chosenGroup: 'playCatch',   // PHRASES key for the "let's play catch!" lines
         scene:       'CatchScene',
     },
-    // Future: 'tidy', 'story', 'writing' added here.
+    {
+        id:          'tidy',
+        name:        'Tidy',
+        image:       'mini_toybox', // not created yet — select tile shows a placeholder box
+        chosenGroup: 'tidyChosen',
+        scene:       'TidyScene',
+    },
+    // Future: 'story', 'writing' added here.
 ];

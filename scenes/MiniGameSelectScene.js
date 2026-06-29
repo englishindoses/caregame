@@ -88,18 +88,31 @@ class MiniGameSelectScene extends Phaser.Scene {
     }
 
     makeTile(game, x, y, TILE) {
-        if (!this.textures.exists(game.image)) return;
+        // The tile is the tap target; its full bounding box is the hit area, so
+        // a tap anywhere on it counts — important for a child.
+        let target, baseScale;
+        if (this.textures.exists(game.image)) {
+            target = this.add.image(x, y, game.image).setDepth(6);
+            baseScale = (TILE * 0.85) / Math.max(target.width, target.height);
+            target.setScale(baseScale);
+        } else {
+            // Placeholder coloured box until the real tile art exists.
+            target = this.add.rectangle(x, y, TILE * 0.85, TILE * 0.85, 0xC79A5B).setDepth(6);
+            target.setStrokeStyle(5, 0x8A6A3A, 1);
+            baseScale = 1;
+            this.add.text(x, y, game.name, {
+                fontFamily: 'Arial, sans-serif',
+                fontSize:   '40px',
+                color:      '#ffffff',
+                stroke:     '#000000',
+                strokeThickness: 5,
+            }).setOrigin(0.5).setDepth(7);
+        }
+        target.setInteractive({ useHandCursor: true });
 
-        // The ball image itself is the tap target. Its full bounding box is the
-        // hit area, so a tap anywhere on the ball counts — important for a child.
-        const img = this.add.image(x, y, game.image).setDepth(6);
-        const baseScale = (TILE * 0.85) / Math.max(img.width, img.height);
-        img.setScale(baseScale);
-        img.setInteractive({ useHandCursor: true });
-
-        // Gentle idle pulse so the ball invites a tap.
+        // Gentle idle pulse so the tile invites a tap.
         this.tweens.add({
-            targets:  img,
+            targets:  target,
             scale:    { from: baseScale, to: baseScale * 1.05 },
             duration: 1500,
             yoyo:     true,
@@ -107,12 +120,12 @@ class MiniGameSelectScene extends Phaser.Scene {
             ease:     'Sine.easeInOut',
         });
 
-        img.once('pointerdown', () => {
+        target.once('pointerdown', () => {
             if (this._inputLocked) return;
-            this.tweens.killTweensOf(img);
-            img.setScale(baseScale);
+            this.tweens.killTweensOf(target);
+            target.setScale(baseScale);
             this.tweens.add({
-                targets:  img,
+                targets:  target,
                 scale:    baseScale * 1.2,
                 duration: 150,
                 yoyo:     true,

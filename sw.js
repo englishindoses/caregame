@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tcm-v3';
+const CACHE_NAME = 'tcm-v4';
 
 const ASSETS = [
     './',
@@ -12,6 +12,7 @@ const ASSETS = [
     './scenes/PlayScene.js',
     './scenes/MiniGameSelectScene.js',
     './scenes/CatchScene.js',
+    './scenes/TidyScene.js',
     './manifest.json',
 
     // Images – WebP (background + all characters)
@@ -96,11 +97,14 @@ const ASSETS = [
     './assets/audio/chosen_2.mp3',
     './assets/audio/chosen_3.mp3',
 
-    // Catch mini-game audio — add these (and bump CACHE_NAME) once the files
-    // exist. cache.addAll() rejects the whole install if any file 404s, so they
-    // are intentionally left out until recorded:
-    //   play_invite_1..3, play_catch_1..2, catch_excite_1..3,
-    //   player_catch_1..3, play_tired_1..3, boing
+    // Mini-game assets — add these (and bump CACHE_NAME) once the files exist.
+    // cache.addAll() rejects the whole install if any file 404s, so they are
+    // intentionally left out until recorded:
+    //   Catch: play_invite_1..3, play_catch_1..2, catch_excite_1..3,
+    //          player_catch_1..3, play_tired_1..3, boing
+    //   Tidy:  tidy_chosen_1..2, tidy_opening_1..2, tidy_name_{ball,book,blocks,car,teddy},
+    //          in_it_goes_1..3, next_one_1..2, tidy_oops_1..2, all_tidy_1..2, plop,
+    //          and the image mini_toybox
 ];
 
 const PHASER_CDN = 'https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js';

@@ -14,6 +14,21 @@ const PHRASES = {
     playerCatch:   ['player_catch_1', 'player_catch_2', 'player_catch_3'],// child caught it
     playTired:     ['play_tired_1', 'play_tired_2', 'play_tired_3'],      // 5 catches done, wind down
 
+    // ── Tidy Time mini-game ──────────────────────────────────────────────────
+    tidyChosen:    ['tidy_chosen_1', 'tidy_chosen_2'],     // tapped the toy-box tile
+    tidyOpening:   ['tidy_opening_1', 'tidy_opening_2'],   // scene entry
+    tidyName: {                                            // spoken as each toy drops in (keyed by toy id)
+        ball:   'tidy_name_ball',
+        book:   'tidy_name_book',
+        blocks: 'tidy_name_blocks',
+        car:    'tidy_name_car',
+        teddy:  'tidy_name_teddy',
+    },
+    inItGoes:      ['in_it_goes_1', 'in_it_goes_2', 'in_it_goes_3'],  // (defined for later; not wired yet)
+    nextOne:       ['next_one_1', 'next_one_2'],                      // (defined for later; not wired yet)
+    tidyOops:      ['tidy_oops_1', 'tidy_oops_2'],        // ~40% on a floor drop
+    allTidy:       ['all_tidy_1', 'all_tidy_2'],          // last toy in, celebration
+
     chosen:     ['chosen', 'chosen_2', 'chosen_3'],
     _chosenIdx: 0,
     nextChosen() {

@@ -47,6 +47,14 @@ class BootScene extends Phaser.Scene {
             ...PHRASES.catchExcite,
             ...PHRASES.playerCatch,
             ...PHRASES.playTired,
+            // Tidy mini-game (files added later — missing keys just no-op).
+            ...PHRASES.tidyChosen,
+            ...PHRASES.tidyOpening,
+            ...Object.values(PHRASES.tidyName),
+            ...PHRASES.inItGoes,
+            ...PHRASES.nextOne,
+            ...PHRASES.tidyOops,
+            ...PHRASES.allTidy,
         ].forEach(key => {
             this.load.audio(key, `assets/audio/${key}.mp3`);
         });
@@ -54,7 +62,9 @@ class BootScene extends Phaser.Scene {
         PHRASES.chosen.forEach(key => {
             this.load.audio(key, `assets/audio/${key}.mp3`);
         });
-        this.load.audio('boing', 'assets/audio/boing.mp3');  // wall-bounce SFX (added later)
+        this.load.audio('boing', 'assets/audio/boing.mp3');  // Catch wall-bounce SFX (added later)
+        this.load.audio('plop',  'assets/audio/plop.mp3');   // Tidy drop SFX (added later)
+        this.load.image('mini_toybox', 'assets/images/mini_toybox.png');  // Tidy box art (added later — placeholder used until then)
     }
 
     create() {
