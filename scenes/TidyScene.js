@@ -34,19 +34,23 @@ class TidyScene extends Phaser.Scene {
         // foreground floor is ~80–100%. Everything here sits on the floor so
         // nothing floats up on the wall.
         this.charX       = W / 2;
-        this.charFeetY   = H * 0.56;   // character stands at the back of the room, feet on the floor
+        this.charY       = H * 0.40;   // exact same spot as the Catch mini-game
         this.boxX        = W / 2;
         this.boxY        = H * 0.87;   // toy box on the open foreground floor
         this.BOX_SIZE    = W * 0.40;
         this.BOX_RADIUS  = Math.max(175, this.BOX_SIZE * 0.6);  // generous — a toddler won't aim precisely
-        this.floorTop    = H * 0.58;   // toys scatter on the rug / mid-floor...
-        this.floorBottom = H * 0.76;   // ...above the toy box
+        this.FLOOR_Y     = H * 0.72;   // toys fall under gravity and rest here, around rug level
         this.TOY_TARGET  = W * 0.18;
-        this.MIN_SPACING = 140;
 
         this.remaining = this.toyDefs.length;
         this._ending   = false;
         this._voice    = null;
+
+        // Toys fall under gravity and rest on the floor at rug level. Open the
+        // top of the world so they can rain in from above the screen.
+        this.physics.world.setBounds(0, 0, W, this.FLOOR_Y);
+        this.physics.world.gravity.y = 900;
+        this.physics.world.checkCollision.up = false;
 
         // Background.
         if (this.textures.exists('bg_room')) {
@@ -68,24 +72,15 @@ class TidyScene extends Phaser.Scene {
     // ── Character ─────────────────────────────────────────────────────────────
 
     buildCharacter() {
-        const key = `${this.characterId}_neutral`;
-        this.charSprite = this.add.image(this.charX, 0, key).setDepth(5);
+        // Match the Catch mini-game exactly: same position, same size, stationary
+        // (no idle bounce).
+        const key = `${this.characterId}_happy`;
+        this.charSprite = this.add.image(this.charX, this.charY, key).setDepth(5);
         if (this.textures.exists(key)) {
-            const maxDim = Math.min(this.W * 0.34, this.H * 0.20);
+            const maxDim = Math.min(this.W * 0.40, this.H * 0.23);
             this.charScale = maxDim / Math.max(this.charSprite.width, this.charSprite.height);
             this.charSprite.setScale(this.charScale);
         }
-        // Place the feet on the floor so the character is grounded, not floating.
-        this.charY = this.charFeetY - this.charSprite.displayHeight / 2;
-        this.charSprite.setY(this.charY);
-        this.tweens.add({
-            targets:  this.charSprite,
-            y:        this.charY - 12,
-            duration: 900,
-            yoyo:     true,
-            repeat:   -1,
-            ease:     'Sine.easeInOut',
-        });
     }
 
     setCharEmotion(emotion) {
@@ -191,41 +186,26 @@ class TidyScene extends Phaser.Scene {
     // ── Toys ──────────────────────────────────────────────────────────────────
 
     spawnToys() {
-        const placed = [];
+        this.toys = [];
+        const n = this.toyDefs.length;
         this.toyDefs.forEach((def, i) => {
-            // Random non-overlapping spot in the floor band.
-            let x = this.W / 2, y = (this.floorTop + this.floorBottom) / 2, tries = 0;
-            do {
-                x = Phaser.Math.Between(this.W * 0.14, this.W * 0.86);
-                y = Phaser.Math.Between(this.floorTop, this.floorBottom);
-                tries++;
-            } while (tries < 20 && placed.some(p => Phaser.Math.Distance.Between(x, y, p.x, p.y) < this.MIN_SPACING));
-            placed.push({ x, y });
+            // Spread across the width and stack above the screen so they rain
+            // down and settle on the floor under gravity.
+            const t = n === 1 ? 0.5 : i / (n - 1);
+            const x = Phaser.Math.Linear(this.W * 0.16, this.W * 0.84, t) + Phaser.Math.Between(-30, 30);
 
-            // Perspective: lower (nearer) toys are bigger.
-            const yFrac = (y - this.floorTop) / (this.floorBottom - this.floorTop);
-            const persp = Phaser.Math.Linear(0.75, 1.10, yFrac);
-
-            const toy = this.add.image(x, -100, def.img).setDepth(7);
-            const base = (this.TOY_TARGET / Math.max(toy.width, toy.height)) * persp;
+            const toy = this.physics.add.image(x, -150 - i * 130, def.img).setDepth(7);
+            const base = (this.TOY_TARGET / Math.max(toy.width, toy.height)) * Phaser.Math.FloatBetween(0.95, 1.1);
             toy.baseScale = base;
             toy.toyId     = def.id;
             toy.setScale(base);
-            toy.setAngle(Phaser.Math.Between(-20, 20));
+            toy.setAngle(Phaser.Math.Between(-15, 15));
+            toy.setCollideWorldBounds(true);
+            toy.setBounce(0.2);
+            toy.setDragX(200);                       // settle horizontally, don't slide
             toy.setInteractive({ useHandCursor: true });
             this.input.setDraggable(toy);
 
-            // Tumble in from above, staggered.
-            toy.tumble = this.tweens.add({
-                targets:  toy,
-                y:        y,
-                angle:    toy.angle + Phaser.Math.Between(-30, 30),
-                duration: 700,
-                delay:    i * 80,
-                ease:     'Bounce.easeOut',
-            });
-
-            if (!this.toys) this.toys = [];
             this.toys.push(toy);
         });
     }
@@ -235,9 +215,9 @@ class TidyScene extends Phaser.Scene {
     setupDrag() {
         this.input.on('dragstart', (_p, obj) => {
             if (this._ending) return;
-            if (obj.tumble) { obj.tumble.stop(); obj.tumble = null; }
+            if (obj.body) obj.body.enable = false;   // follow the finger, gravity off while held
             this.children.bringToTop(obj);
-            obj.setScale(obj.baseScale * 1.1);   // "I've got it"
+            obj.setScale(obj.baseScale * 1.1);        // "I've got it"
         });
 
         this.input.on('drag', (_p, obj, dragX, dragY) => {
@@ -255,15 +235,19 @@ class TidyScene extends Phaser.Scene {
             if (dist < this.BOX_RADIUS) {
                 this.dropInBox(obj);
             } else {
-                // Stays exactly where it was left, on the floor. Just shrink back
-                // from the pick-up scale. Occasionally a soft "oops".
+                // Dropped in the air → gravity pulls it back down to the floor.
                 obj.setScale(obj.baseScale);
+                if (obj.body) {
+                    obj.body.enable = true;
+                    obj.setVelocity(0, 0);
+                }
                 if (Math.random() < 0.4) this.playVoice(Phaser.Utils.Array.GetRandom(PHRASES.tidyOops));
             }
         });
     }
 
     dropInBox(obj) {
+        if (obj.body) obj.body.enable = false;   // no physics while it tweens into the box
         obj.disableInteractive();
         this.input.setDraggable(obj, false);
 
