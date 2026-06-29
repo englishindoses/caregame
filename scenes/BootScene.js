@@ -62,9 +62,12 @@ class BootScene extends Phaser.Scene {
         PHRASES.chosen.forEach(key => {
             this.load.audio(key, `assets/audio/${key}.mp3`);
         });
-        this.load.audio('boing', 'assets/audio/boing.mp3');  // Catch wall-bounce SFX (added later)
-        this.load.audio('plop',  'assets/audio/plop.mp3');   // Tidy drop SFX (added later)
-        this.load.image('mini_toybox', 'assets/images/mini_toybox.png');  // Tidy box art (added later — placeholder used until then)
+        this.load.audio('boing_1',   'assets/audio/boing_1.mp3');    // Catch wall-bounce SFX (random of 2)
+        this.load.audio('boing_2',   'assets/audio/boing_2.mp3');
+        this.load.audio('plop',      'assets/audio/plop.mp3');       // Tidy drop SFX (added later)
+        this.load.audio('celebrate', 'assets/audio/celebrate.mp3');  // Tidy finish SFX (synth fallback until added)
+        this.load.image('toy_box_closed', 'assets/images/toy_box_closed.png');
+        this.load.image('toy_box_open',   'assets/images/toy_box_open.png');
     }
 
     create() {

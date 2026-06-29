@@ -13,7 +13,7 @@ const MINIGAMES = [
     {
         id:          'tidy',
         name:        'Tidy',
-        image:       'mini_toybox', // not created yet — select tile shows a placeholder box
+        image:       'toy_box_closed',
         chosenGroup: 'tidyChosen',
         scene:       'TidyScene',
     },

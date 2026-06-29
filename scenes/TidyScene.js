@@ -68,6 +68,7 @@ class TidyScene extends Phaser.Scene {
             this.add.rectangle(W / 2, H / 2, W, H, 0xF2E4D4);
         }
 
+        this.makeStarTexture();
         this.buildCharacter();
 
         // Toys scatter from the character's feet down to the (raised) rug edge.
@@ -150,13 +151,15 @@ class TidyScene extends Phaser.Scene {
 
     buildBox() {
         const startY = this.H + this.BOX_SIZE;   // off-screen below; slides up
+        this.boxClosedKey = 'toy_box_closed';
+        this.boxOpenKey   = 'toy_box_open';
 
         // Soft glow behind the box; brightens when a dragged toy is over it.
         this.boxGlow = this.add.rectangle(this.boxX, this.boxY,
             this.BOX_SIZE * 1.15, this.BOX_SIZE * 0.95, 0xFFF1A8, 0).setDepth(4);
 
-        if (this.textures.exists('mini_toybox')) {
-            this.boxObj = this.add.image(this.boxX, startY, 'mini_toybox').setDepth(6);
+        if (this.textures.exists(this.boxClosedKey)) {
+            this.boxObj = this.add.image(this.boxX, startY, this.boxClosedKey).setDepth(6);
             this.boxBase = this.BOX_SIZE / Math.max(this.boxObj.width, this.boxObj.height);
             this.boxObj.setScale(this.boxBase);
         } else {
@@ -166,7 +169,7 @@ class TidyScene extends Phaser.Scene {
             this.boxObj.setStrokeStyle(5, 0x8A6A3A, 1);
             this.boxBase = 1;
             this.boxLabel = this.add.text(this.boxX, startY, 'Toy Box', {
-                fontFamily: 'Arial, sans-serif',
+                fontFamily: '"Quicksand", Arial, sans-serif',
                 fontSize:   '40px',
                 color:      '#ffffff',
                 stroke:     '#000000',
@@ -174,13 +177,14 @@ class TidyScene extends Phaser.Scene {
             }).setOrigin(0.5).setDepth(7);
         }
 
-        // Slide up into place, then start the subtle idle pulse.
+        // Slide up into place, then open the lid and start the subtle idle pulse.
         this.tweens.add({
             targets:  this.boxLabel ? [this.boxObj, this.boxLabel] : this.boxObj,
             y:        this.boxY,
             duration: 500,
             ease:     'Back.easeOut',
             onComplete: () => {
+                this.time.delayedCall(250, () => this.openBox());
                 this.tweens.add({
                     targets:  this.boxObj,
                     scaleX:   this.boxBase * 1.02,
@@ -191,6 +195,79 @@ class TidyScene extends Phaser.Scene {
                     ease:     'Sine.easeInOut',
                 });
             },
+        });
+    }
+
+    setBoxTexture(key) {
+        // Swap closed/open art if the box is a real image (placeholder is a rect).
+        if (this.boxObj && this.boxObj.setTexture && this.textures.exists(key)) {
+            this.boxObj.setTexture(key);
+        }
+    }
+
+    openBox()  { this.setBoxTexture(this.boxOpenKey); }
+    closeBox() { this.setBoxTexture(this.boxClosedKey); }
+
+    // ── Celebration: star explosion ───────────────────────────────────────────
+
+    makeStarTexture() {
+        if (this.textures.exists('star_particle')) return;
+        const g = this.make.graphics({ add: false });
+        g.fillStyle(0xffffff, 1);
+        g.fillPoints(this.starPoints(22, 22, 5, 20, 9), true);
+        g.generateTexture('star_particle', 44, 44);
+        g.destroy();
+    }
+
+    starPoints(cx, cy, spikes, outerR, innerR) {
+        const pts = [];
+        let rot = -Math.PI / 2;
+        const step = Math.PI / spikes;
+        for (let i = 0; i < spikes; i++) {
+            pts.push({ x: cx + Math.cos(rot) * outerR, y: cy + Math.sin(rot) * outerR }); rot += step;
+            pts.push({ x: cx + Math.cos(rot) * innerR, y: cy + Math.sin(rot) * innerR }); rot += step;
+        }
+        return pts;
+    }
+
+    starBurst() {
+        const colors = [0xFFD83D, 0xFF6B9D, 0x6BC5FF, 0x8AE26B, 0xC79AFF, 0xFFFFFF];
+        const emitter = this.add.particles(this.boxX, this.boxY - this.BOX_SIZE * 0.2, 'star_particle', {
+            speed:    { min: 250, max: 680 },
+            angle:    { min: 0, max: 360 },
+            gravityY: 650,
+            lifespan: 1200,
+            scale:    { start: 1.0, end: 0 },
+            rotate:   { min: 0, max: 360 },
+            tint:     colors,
+            emitting: false,
+        }).setDepth(25);
+        emitter.explode(40);
+        this.time.delayedCall(1600, () => emitter.destroy());
+    }
+
+    playCelebrate() {
+        if (this.sound.mute) return;
+        if (this.cache.audio.exists('celebrate')) { this.sound.play('celebrate'); return; }
+
+        // No celebrate.mp3 yet — synthesize a bright ascending sparkle arpeggio.
+        const ctx = this.sound.context;
+        if (!ctx || ctx.state !== 'running') return;
+        const now   = ctx.currentTime;
+        const notes = [523.25, 659.25, 783.99, 1046.5];   // C5 E5 G5 C6
+        notes.forEach((f, i) => {
+            const t0   = now + i * 0.09;
+            const osc  = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(f, t0);
+            gain.gain.setValueAtTime(0.0001, t0);
+            gain.gain.exponentialRampToValueAtTime(0.22, t0 + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.5);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(t0);
+            osc.stop(t0 + 0.55);
         });
     }
 
@@ -262,6 +339,8 @@ class TidyScene extends Phaser.Scene {
     setupDrag() {
         this.input.on('dragstart', (_p, obj) => {
             if (this._ending) return;
+            this.tweens.killTweensOf(obj);            // stop a wobble if this toy was being pointed at
+            obj.setAngle(Phaser.Math.Between(-12, 12));
             if (obj.body) obj.body.enable = false;   // follow the finger, gravity off while held
             obj.setDepth(20);                         // held toy on top
             this.applyPerspective(obj, 1.12);         // perspective + slight pick-up emphasis
@@ -306,6 +385,7 @@ class TidyScene extends Phaser.Scene {
         if (obj.body) obj.body.enable = false;   // no physics while it tweens into the box
         obj.disableInteractive();
         this.input.setDraggable(obj, false);
+        this.tweens.killTweensOf(obj);           // cancel any wobble in progress
 
         this.playPlop();
         this.playVoice(PHRASES.tidyName[obj.toyId]);   // names the toy, interrupts prior voice
@@ -328,18 +408,57 @@ class TidyScene extends Phaser.Scene {
         });
 
         this.remaining--;
-        if (this.remaining <= 0) this.finish();
+        if (this.remaining <= 0) {
+            this.finish();
+        } else {
+            // A beat after the toy name, sometimes encourage / point to another toy.
+            this.time.delayedCall(900, () => this.maybePrompt());
+        }
+    }
+
+    // Occasionally play an encouragement after a drop. If it's the "and that one!"
+    // line, wobble a random remaining toy as if pointing to it — the child can
+    // drag that one, or any other; either is fine.
+    maybePrompt() {
+        if (this._ending || !this.toys) return;
+        const remaining = this.toys.filter(t => t.active && t.body && t.body.enable);
+        if (remaining.length === 0) return;
+        if (Math.random() > 0.5) return;   // not every drop — keeps the character present, not chatty
+
+        const key = Phaser.Utils.Array.GetRandom(PHRASES.inItGoes);
+        this.playVoice(key);
+        if (key === 'in_it_goes_2') {
+            this.wobbleToy(Phaser.Utils.Array.GetRandom(remaining));
+        }
+    }
+
+    wobbleToy(toy) {
+        if (!toy || !toy.active) return;
+        const base = toy.angle;
+        this.tweens.killTweensOf(toy);
+        this.tweens.add({
+            targets:  toy,
+            angle:    { from: base - 12, to: base + 12 },
+            duration: 110,
+            yoyo:     true,
+            repeat:   4,
+            ease:     'Sine.easeInOut',
+            onComplete: () => { if (toy.active) toy.setAngle(base); },
+        });
     }
 
     // ── Ending ────────────────────────────────────────────────────────────────
 
     finish() {
         this._ending = true;
+        this.closeBox();
         this.setCharEmotion('jumping');
         this.pulse(this.charSprite, 1.18);
+        this.starBurst();
+        this.playCelebrate();
 
-        // Let the final toy's name land, then the celebration line, then go back.
-        this.time.delayedCall(700, () => {
+        // Let the celebration land, then the all-tidy line, then go back.
+        this.time.delayedCall(900, () => {
             this.playVoiceThen(
                 Phaser.Utils.Array.GetRandom(PHRASES.allTidy),
                 () => this.scene.start('PlayScene', { characterId: this.characterId, fromMinigame: true }),

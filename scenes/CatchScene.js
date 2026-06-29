@@ -293,7 +293,8 @@ class CatchScene extends Phaser.Scene {
     playBoing() {
         // Fire-and-forget SFX — never queued, never locks input.
         if (this.sound.mute) return;
-        if (this.cache.audio.exists('boing')) { this.sound.play('boing'); return; }
+        const clips = ['boing_1', 'boing_2'].filter(k => this.cache.audio.exists(k));
+        if (clips.length) { this.sound.play(Phaser.Utils.Array.GetRandom(clips)); return; }
 
         // No boing.mp3 yet — synthesize a soft "doink": a sine tone whose pitch
         // drops quickly with a fast fade-out. Swap for the recorded clip later.
