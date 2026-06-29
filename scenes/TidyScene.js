@@ -42,6 +42,13 @@ class TidyScene extends Phaser.Scene {
         // RUG_TOP is set from the character's feet once the sprite exists (see below).
         this.RUG_BOTTOM  = H * 0.63;   // raised bottom edge of the toy zone — toys rest above this
         this.FLOOR_Y     = H * 0.74;   // world-floor safety net just below the rug
+
+        // Live perspective: a toy's size depends on its current Y — higher on the
+        // screen (further away) is smaller, lower (nearer the player) is bigger.
+        this.PERSP_FAR_Y  = H * 0.45;
+        this.PERSP_NEAR_Y = H * 0.92;
+        this.PERSP_MIN    = 0.70;
+        this.PERSP_MAX    = 1.30;
         this.TOY_TARGET  = W * 0.18;
 
         this.remaining = this.toyDefs.length;
@@ -78,17 +85,28 @@ class TidyScene extends Phaser.Scene {
 
     update() {
         if (!this.toys) return;
-        // Stop each falling toy at its own rug level so they scatter across the
-        // rug instead of piling onto one floor line.
         for (const toy of this.toys) {
-            if (!toy.active || !toy.body || !toy.body.enable || toy.landed) continue;
-            if (toy.body.velocity.y >= 0 && toy.y >= toy.restY) {
+            if (!toy.active || !toy.body || !toy.body.enable) continue;  // dragged toys are sized by the drag handler
+            // Stop each falling toy at its own rug level so they scatter across
+            // the rug instead of piling onto one floor line.
+            if (!toy.landed && toy.body.velocity.y >= 0 && toy.y >= toy.restY) {
                 toy.y = toy.restY;
                 toy.setVelocity(0, 0);
                 toy.body.setAllowGravity(false);
                 toy.landed = true;
             }
+            this.applyPerspective(toy);   // grows as it descends; constant once at rest
         }
+    }
+
+    // Size a toy from its current Y: smaller up high (far), bigger low down (near).
+    perspFactor(y) {
+        const t = Phaser.Math.Clamp((y - this.PERSP_FAR_Y) / (this.PERSP_NEAR_Y - this.PERSP_FAR_Y), 0, 1);
+        return Phaser.Math.Linear(this.PERSP_MIN, this.PERSP_MAX, t);
+    }
+
+    applyPerspective(toy, extra = 1) {
+        toy.setScale(toy.unitScale * this.perspFactor(toy.y) * extra);
     }
 
     // ── Character ─────────────────────────────────────────────────────────────
@@ -99,7 +117,7 @@ class TidyScene extends Phaser.Scene {
         const key = `${this.characterId}_happy`;
         this.charSprite = this.add.image(this.charX, this.charY, key).setDepth(5);
         if (this.textures.exists(key)) {
-            const maxDim = Math.min(this.W * 0.40, this.H * 0.23);
+            const maxDim = Math.min(this.W * 0.46, this.H * 0.27);
             this.charScale = maxDim / Math.max(this.charSprite.width, this.charSprite.height);
             this.charSprite.setScale(this.charScale);
         }
@@ -218,18 +236,16 @@ class TidyScene extends Phaser.Scene {
             const x = Phaser.Math.Linear(this.W * 0.16, this.W * 0.84, t) + Phaser.Math.Between(-30, 30);
             const restY = Phaser.Math.Between(this.RUG_TOP, this.RUG_BOTTOM);
 
-            // Depth: lower (nearer) toys rest bigger and draw in front.
-            const yFrac = (restY - this.RUG_TOP) / (this.RUG_BOTTOM - this.RUG_TOP);
-            const persp = Phaser.Math.Linear(0.82, 1.12, yFrac);
-
             const toy = this.physics.add.image(x, -150 - i * 130, def.img);
-            const base = (this.TOY_TARGET / Math.max(toy.width, toy.height)) * persp;
-            toy.baseScale = base;
+            toy.unitScale = this.TOY_TARGET / Math.max(toy.width, toy.height);  // size at perspective factor 1
             toy.toyId     = def.id;
             toy.restY     = restY;
             toy.landed    = false;
-            toy.setScale(base);
-            toy.setDepth(7 + yFrac * 4);
+            // Draw order: lower (nearer) toys in front.
+            const yFrac = (restY - this.RUG_TOP) / Math.max(1, this.RUG_BOTTOM - this.RUG_TOP);
+            toy.baseDepth = 7 + yFrac * 4;
+            toy.setDepth(toy.baseDepth);
+            this.applyPerspective(toy);                 // initial size from spawn Y (small up high)
             toy.setAngle(Phaser.Math.Between(-15, 15));
             toy.setCollideWorldBounds(true);
             toy.setBounce(0.15);
@@ -247,13 +263,14 @@ class TidyScene extends Phaser.Scene {
         this.input.on('dragstart', (_p, obj) => {
             if (this._ending) return;
             if (obj.body) obj.body.enable = false;   // follow the finger, gravity off while held
-            this.children.bringToTop(obj);
-            obj.setScale(obj.baseScale * 1.1);        // "I've got it"
+            obj.setDepth(20);                         // held toy on top
+            this.applyPerspective(obj, 1.12);         // perspective + slight pick-up emphasis
         });
 
         this.input.on('drag', (_p, obj, dragX, dragY) => {
             if (this._ending) return;
             obj.setPosition(dragX, dragY);
+            this.applyPerspective(obj, 1.12);         // grows as it's pulled lower (closer)
             // Light up the box when the toy is over it.
             const near = Phaser.Math.Distance.Between(dragX, dragY, this.boxX, this.boxY) < this.BOX_RADIUS;
             this.boxGlow.setAlpha(near ? 0.55 : 0);
@@ -267,13 +284,14 @@ class TidyScene extends Phaser.Scene {
                 this.dropInBox(obj);
             } else {
                 // Dropped in the air → gravity pulls it back down to its rug level.
-                obj.setScale(obj.baseScale);
+                obj.setDepth(obj.baseDepth);
                 if (obj.body) {
                     obj.body.enable = true;
                     obj.body.setAllowGravity(true);
                     obj.setVelocity(0, 0);
                     obj.landed = false;
                 }
+                this.applyPerspective(obj);
                 if (Math.random() < 0.4) this.playVoice(Phaser.Utils.Array.GetRandom(PHRASES.tidyOops));
             }
         });

@@ -49,7 +49,7 @@ class CatchScene extends Phaser.Scene {
         const charKey = `${this.characterId}_happy`;
         this.charSprite = this.add.image(this.charX, this.charY, charKey);
         if (this.textures.exists(charKey)) {
-            const maxDim = Math.min(W * 0.40, H * 0.23);
+            const maxDim = Math.min(W * 0.46, H * 0.27);
             this.charScale = maxDim / Math.max(this.charSprite.width, this.charSprite.height);
             this.charSprite.setScale(this.charScale);
         }
