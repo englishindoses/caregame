@@ -29,18 +29,20 @@ class TidyScene extends Phaser.Scene {
             { img: 'item_teddy',  id: 'teddy'  },
         ];
 
-        // Layout (reference resolution). The "floor" is a big band — toys scatter
-        // across it and can be left anywhere on it.
-        this.charX      = W / 2;
-        this.charY      = H * 0.28;
-        this.boxX       = W / 2;
-        this.boxY       = H * 0.86;
-        this.BOX_SIZE   = W * 0.40;
-        this.BOX_RADIUS = Math.max(175, this.BOX_SIZE * 0.6);  // generous — a toddler won't aim precisely
-        this.floorTop   = H * 0.40;
-        this.floorBottom = H * 0.74;
-        this.TOY_TARGET = W * 0.20;
-        this.MIN_SPACING = 150;
+        // Layout (reference resolution). In bg_room the back wall meets the floor
+        // at ~50% of screen height; the round rug spans ~52–81% and the open
+        // foreground floor is ~80–100%. Everything here sits on the floor so
+        // nothing floats up on the wall.
+        this.charX       = W / 2;
+        this.charFeetY   = H * 0.56;   // character stands at the back of the room, feet on the floor
+        this.boxX        = W / 2;
+        this.boxY        = H * 0.87;   // toy box on the open foreground floor
+        this.BOX_SIZE    = W * 0.40;
+        this.BOX_RADIUS  = Math.max(175, this.BOX_SIZE * 0.6);  // generous — a toddler won't aim precisely
+        this.floorTop    = H * 0.58;   // toys scatter on the rug / mid-floor...
+        this.floorBottom = H * 0.76;   // ...above the toy box
+        this.TOY_TARGET  = W * 0.18;
+        this.MIN_SPACING = 140;
 
         this.remaining = this.toyDefs.length;
         this._ending   = false;
@@ -67,12 +69,15 @@ class TidyScene extends Phaser.Scene {
 
     buildCharacter() {
         const key = `${this.characterId}_neutral`;
-        this.charSprite = this.add.image(this.charX, this.charY, key).setDepth(5);
+        this.charSprite = this.add.image(this.charX, 0, key).setDepth(5);
         if (this.textures.exists(key)) {
-            const maxDim = Math.min(this.W * 0.40, this.H * 0.22);
+            const maxDim = Math.min(this.W * 0.34, this.H * 0.20);
             this.charScale = maxDim / Math.max(this.charSprite.width, this.charSprite.height);
             this.charSprite.setScale(this.charScale);
         }
+        // Place the feet on the floor so the character is grounded, not floating.
+        this.charY = this.charFeetY - this.charSprite.displayHeight / 2;
+        this.charSprite.setY(this.charY);
         this.tweens.add({
             targets:  this.charSprite,
             y:        this.charY - 12,
