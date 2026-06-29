@@ -39,8 +39,8 @@ class TidyScene extends Phaser.Scene {
         this.boxY        = H * 0.87;   // toy box on the open foreground floor
         this.BOX_SIZE    = W * 0.40;
         this.BOX_RADIUS  = Math.max(155, this.BOX_SIZE * 0.55);  // generous, but clear of resting toys
-        this.RUG_TOP     = H * 0.54;   // round rug spans ~53–68% of the screen; toys scatter...
-        this.RUG_BOTTOM  = H * 0.67;   // ...across it, each resting at its own level (with depth scaling)
+        // RUG_TOP is set from the character's feet once the sprite exists (see below).
+        this.RUG_BOTTOM  = H * 0.63;   // raised bottom edge of the toy zone — toys rest above this
         this.FLOOR_Y     = H * 0.74;   // world-floor safety net just below the rug
         this.TOY_TARGET  = W * 0.18;
 
@@ -62,6 +62,11 @@ class TidyScene extends Phaser.Scene {
         }
 
         this.buildCharacter();
+
+        // Toys scatter from the character's feet down to the (raised) rug edge.
+        this.charFeetY = this.charSprite.y + this.charSprite.displayHeight / 2;
+        this.RUG_TOP   = this.charFeetY;
+
         this.buildBox();
         this.buildNameText();
         this.spawnToys();
