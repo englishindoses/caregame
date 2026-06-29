@@ -58,6 +58,12 @@ class TidyScene extends Phaser.Scene {
         this._dragLocked   = false;   // gate toy dragging during a name reveal / the finale
         this._revealActive = false;   // a dropped toy's name is on screen, waiting for a tap
 
+        this._dropNum = 0;
+        // "in it goes" (before the name) and "what about that one?" (after it) each
+        // play on only 2–3 of the four non-final drops — not every time.
+        this._beforeDrops = new Set(Phaser.Utils.Array.Shuffle([1, 2, 3, 4]).slice(0, Phaser.Math.Between(2, 3)));
+        this._afterDrops  = new Set(Phaser.Utils.Array.Shuffle([1, 2, 3, 4]).slice(0, Phaser.Math.Between(2, 3)));
+
         // Toys fall under gravity and rest on the floor at rug level. Open the
         // top of the world so they can rain in from above the screen.
         this.physics.world.setBounds(0, 0, W, this.FLOOR_Y);
@@ -400,11 +406,13 @@ class TidyScene extends Phaser.Scene {
         this.boxGlow.setAlpha(0.7);
         this.tweens.add({ targets: this.boxGlow, alpha: 0, duration: 300 });
 
-        const isLast = this.remaining - 1 <= 0;
+        const isLast  = this.remaining - 1 <= 0;
+        const dropNum = ++this._dropNum;
         this.remaining--;
-        this._dragLocked   = true;     // freeze the other toys during the reveal
-        this._revealToy    = obj;
-        this._revealIsLast = isLast;
+        this._dragLocked    = true;    // freeze the other toys during the reveal
+        this._revealToy     = obj;
+        this._revealIsLast  = isLast;
+        this._revealDropNum = dropNum;
 
         // Lift the dropped toy onto the box and hold it visible.
         this.tweens.add({
@@ -425,10 +433,11 @@ class TidyScene extends Phaser.Scene {
             this.input.once('pointerdown', () => this.resolveReveal());
         };
 
-        if (!isLast && this.cache.audio.exists('in_it_goes_1')) {
+        const sayBefore = !isLast && this._beforeDrops.has(dropNum) && this.cache.audio.exists('in_it_goes_1');
+        if (sayBefore) {
             this.playVoiceThen('in_it_goes_1', reveal, 1100);   // "in it goes" before the name
         } else {
-            this.time.delayedCall(280, reveal);                 // final item: the name comes up first
+            this.time.delayedCall(280, reveal);                 // name straight after the drop sound
         }
     }
 
@@ -454,15 +463,18 @@ class TidyScene extends Phaser.Scene {
                 this.time.delayedCall(900, () => this.playEndLine());
             });
         } else {
-            // Re-allow dragging after this tap's event; then "what about that one?"
-            // once the name has gone, pointing to a remaining toy.
+            // Re-allow dragging after this tap's event.
             this.time.delayedCall(60, () => { this._dragLocked = false; });
-            this.time.delayedCall(280, () => {
-                if (this._ending) return;
-                const left = this.toys.filter(t => t.active && t.body && t.body.enable);
-                this.playVoice('in_it_goes_2');
-                if (left.length) this.wobbleToy(Phaser.Utils.Array.GetRandom(left));
-            });
+            // On scheduled drops only: "what about that one?" once the name has
+            // gone, pointing to a remaining toy.
+            if (this._afterDrops.has(this._revealDropNum)) {
+                this.time.delayedCall(280, () => {
+                    if (this._ending) return;
+                    const left = this.toys.filter(t => t.active && t.body && t.body.enable);
+                    this.playVoice('in_it_goes_2');
+                    if (left.length) this.wobbleToy(Phaser.Utils.Array.GetRandom(left));
+                });
+            }
         }
     }
 
