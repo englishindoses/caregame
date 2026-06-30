@@ -25,15 +25,18 @@ A touch-based vocabulary game for 3-year-olds. The child chooses a character (Do
     SelectScene.js          ← character picker
     PlayScene.js            ← main game loop
     MiniGameSelectScene.js  ← "What shall we play?" screen
-    CatchScene.js           ← Catch mini-game (Arcade Physics)
+    CatchScene.js           ← Catch mini-game (Arcade Physics, no gravity)
+    TidyScene.js            ← Tidy Time mini-game (Arcade Physics + gravity)
+    doorButton.js           ← shared hold-to-exit button helper
   /data
     items.js                ← all items (id, name, request, image key, audio key, category)
     characters.js           ← all characters (id, name, color, image keys)
     phrases.js              ← shared phrases (thank you variants, all done, chosen, mini-game lines)
-    minigames.js            ← mini-game tiles for the select screen
+    minigames.js            ← mini-game tiles for the select screen (catch + tidy)
   /assets
-    /images                 ← 34 images: 20 WebP + 14 PNG (character emotions, items, background)
-    /audio                  ← 37 MP3s (requests, category thank-yous, wrong, sleepy, all-done, chosen)
+    /images                 ← 36 images: 20 WebP + 16 PNG (characters, items, toy box, background)
+    /audio                  ← 52 MP3s (main game + Catch boing + Tidy lines)
+    /fonts                  ← quicksand-700.woff2 (self-hosted, offline)
   /planning_docs            ← planning docs, not part of the game
 ```
 
@@ -94,14 +97,14 @@ Loads all assets with a simple progress bar. If a character is saved in `localSt
 - Subtle arc draws around it during the hold.
 - On completion, clears saved character and goes straight to SelectScene.
 
-## Scene 4 — Mini-games ✓ (Catch; audio pending)
+## Scene 4 — Mini-games ✓ (Catch + Tidy; some audio pending)
 
-After 3 trays are cleared, PlayScene breaks to a mini-game and resumes afterwards. Built so more mini-games can be added as data + a scene file.
+After 3 trays are cleared, PlayScene breaks to a mini-game and resumes afterwards. Built so more mini-games can be added as data + a scene file. All mini-game scenes have the **hold-to-exit door button** (shared `scenes/doorButton.js`).
 
 **MiniGameSelectScene — "What shall we play?"**
 - Same bedroom background; chosen character bobs small in the bottom-left.
-- One tappable tile per `MINIGAMES` entry (just the ball for now). The whole ball image is the tap target so a child can tap anywhere on it. Layout adapts for 1–4 tiles.
-- Tap → plays a "let's play catch!" line → starts the mini-game scene.
+- One tappable tile per `MINIGAMES` entry (ball + toy box). The whole tile image is the tap target so a child can tap anywhere on it; a missing tile image shows a coloured placeholder. Optional per-tile `tileScale`. Layout adapts for 1–4 tiles.
+- Tap → plays the tile's chosen line → starts the mini-game scene.
 
 **CatchScene — throw-and-catch with the character (no failure states)**
 - Arcade Physics, **no gravity** — throws drift to the character and stay forgiving for a toddler.
@@ -111,9 +114,24 @@ After 3 trays are cleared, PlayScene breaks to a mini-game and resumes afterward
 - **Exit:** after 5 catches the character tires (sleepy face + tired line) and returns to the main game.
 - **Boing** on every wall bounce — synthesized in code (soft "doink") until a `boing.mp3` is added.
 
-**Audio pending:** the 14 mini-game voice clips + `boing.mp3` aren't recorded yet. The mini-game runs fully on timers without them (missing audio just no-ops). See `mini-game-assets.md` for the list to record.
+**Boing** now plays a random of two recorded clips (`boing_1/2`), synth fallback otherwise. Catch voice clips still to record — the ending falls back to a real `sleepy_*` line so it isn't silent.
+
+**TidyScene — put all the toys away (no failure states)**
+- Arcade Physics **with gravity** (this scene only). The 5 toys rain in and each settles at its own random height across a rug band (top = the character's feet) so they scatter. **Live perspective** sizes each toy by its current Y (lower = bigger). A toy dropped on the rug rests where left; only one released above the rug falls.
+- **Toy box** (`toy_box_closed/open`): slides in closed, opens after landing, closes on the last toy.
+- **Tap-to-continue reveal:** each drop → plop, the toy lifts onto the box and stays visible, its name appears ~3× big and centred (Quicksand) and hovers; a tap pops both and continues. `in_it_goes_1` before the name, `in_it_goes_2` (+ wobble) after — each on 2–3 of the four non-final drops.
+- **Final toy:** name → tap → box closes + **star explosion** (code-generated) + sound → "all done" → back to the main game.
+- Audio is interrupt-based and **never locks input** here, so quick tidying never waits.
+
+**Audio status:** Tidy's `tidy_chosen_1–3`, `item_name_*`, `in_it_goes_1/2`, `next_one_1`, `well_done_1` and Catch's `boing_1/2` are recorded. Still to record: all Catch voice, and Tidy's `tidy_oops_*`, `all_tidy_*`, `in_it_goes_3`, `plop`, `celebrate` (synth/timer/fallback meanwhile). See `assets-to-create.md`.
 
 **Dev shortcut:** open `index.html?mini` to jump straight to the mini-game without clearing 3 trays. Remove before final release.
+
+## PWA / deployment ✓
+
+- Installable, offline-capable. Service worker is **network-first for code** (HTML/JS) and **cache-first for media** (images/audio/fonts); `CACHE_NAME` (now `tcm-v7`) + the `ASSETS` pre-cache list govern offline.
+- Deployed via **GitHub Pages** from `main` of `englishindoses/caregame` → https://englishindoses.github.io/caregame/ . Pushing to `main` deploys.
+- The Tidy toy-name text uses a **self-hosted Quicksand** font (`assets/fonts/quicksand-700.woff2`) so it works offline.
 
 ## Item randomisation ✓
 

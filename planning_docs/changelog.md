@@ -4,6 +4,36 @@ History of decisions and plan changes. Short entries: what changed and why.
 
 ---
 
+## 2026-06-29 — Tidy Time mini-game, exit button, font, PWA caching
+
+**Tidy Time — second mini-game (`TidyScene`)**
+Drag all 5 toys into the toy box. Second tile on the select screen (with a `tileScale` so the box tile draws bigger). Built up over many iterations from testing on the real bedroom background:
+- Toys use **per-scene gravity**: they rain in and each settles at its own random height across a rug band (top = the character's feet, computed from the sprite; bottom `RUG_BOTTOM`) so they scatter rather than line up. **Live perspective** sizes a toy by its current Y (lower = bigger). A toy dropped on the rug **rests where it's left**; only one released above the rug falls — fixing an earlier unphysical "snaps back up" bug.
+- **Real toy-box art** (`toy_box_closed/open`): slides in closed, opens after landing, closes on the last toy.
+- **Tap-to-continue name reveal:** each valid drop shows the toy name ~3× big, centred, hovering (Quicksand, auto-fit width) while the toy stays visible; a screen tap pops both and continues. `in_it_goes_1` plays before the name and `in_it_goes_2` (wobbles a remaining toy) after it — each on only 2–3 of the four non-final drops. Final toy: name → tap → box closes + **code-generated star explosion** + celebration sound → "all done" → back to the main game.
+- Audio here is **interrupt-based and never locks input** (unlike the main game), so a briskly-tidying toddler never waits.
+- Character matches the Catch mini-game exactly (same position/size, stationary).
+
+**Exit door button in the mini-games**
+Extracted the main game's hold-to-exit door into a shared `scenes/doorButton.js` (`addDoorButton(scene)`) and added it to Catch, Tidy, and the select screen. Same behaviour: hold 2s → clear saved character → SelectScene.
+
+**Self-hosted Quicksand font**
+Toy names use Quicksand (OFL, single-story "a"), self-hosted at `assets/fonts/quicksand-700.woff2` so the PWA stays offline-capable. Declared via `@font-face` and awaited in BootScene before scenes render (Phaser draws text to canvas, so the font must load first).
+
+**Service worker → network-first for code**
+Root cause of "reload shows no changes": the cache-first worker served stale JS forever, and code-only commits didn't bump `CACHE_NAME`. Switched HTML/JS to **network-first** (cache fallback for offline) and kept images/audio/fonts **cache-first**. Now online reloads always get the latest code. `CACHE_NAME` walked `tcm-v3 → tcm-v7` over this work.
+
+**Catch ending voiced**
+`play_tired_*` aren't recorded, so the sleepy ending was silent; it now falls back to the real `sleepy_*` lines.
+
+**Synthesized SFX while assets are pending**
+`boing` (now `boing_1/2` recorded), `plop`, and `celebrate` are synthesized via the Web Audio API so the mini-games are audible before those files exist.
+
+**Asset filename reconciliations**
+Toy-name lines are `item_name_*` (generic/reusable), not `tidy_name_*`. The Tidy in-scene opening reuses `tidy_chosen_2/3` (cycled), so `tidy_opening_*` is no longer needed.
+
+---
+
 ## 2026-06-27 — Catch mini-game (first mini-game; audio pending)
 
 **New "break" loop after 3 trays**

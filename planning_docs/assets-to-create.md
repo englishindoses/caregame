@@ -153,12 +153,12 @@ The definitive list of game assets: what **exists** and what **still needs to be
 
 *(Until recorded, the character-catch moment reuses `thank_you_toys_1`.)*
 
-### Tidy Time mini-game — voice (6 needed + 2 optional)
+### Tidy Time mini-game — voice (4 needed + 2 optional)
+
+> The in-scene opening line now **reuses `tidy_chosen_2`/`tidy_chosen_3`** (cycled), so dedicated `tidy_opening_*` clips are **not needed**.
 
 | Filename | Suggested line |
 |---|---|
-| `tidy_opening_1.mp3` | Let's tidy up! Put all the toys away in the toy box. |
-| `tidy_opening_2.mp3` | Look at all these toys! Let's pop them in the box. |
 | `tidy_oops_1.mp3` | Oopsie! Try again! |
 | `tidy_oops_2.mp3` | Almost! Pop it in the box. |
 | `all_tidy_1.mp3` | All nice and clean! Well done! |
@@ -205,6 +205,9 @@ The definitive list of game assets: what **exists** and what **still needs to be
 - `toy_box_open.png` — same box, open and ready to receive toys. Shown during play.
 
 > The celebration **stars are generated in code** (no image asset needed).
+
+### Font (1)
+- `assets/fonts/quicksand-700.woff2` — Quicksand 700 (Google Fonts, OFL). Self-hosted (so the PWA works offline) for the Tidy toy-name reveal. Single-story "a".
 
 ## ⛔ Images still to make
 
