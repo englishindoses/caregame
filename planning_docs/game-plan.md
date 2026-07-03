@@ -123,7 +123,7 @@ After 3 trays are cleared, PlayScene breaks to a mini-game and resumes afterward
 - **Final toy:** name → tap → box closes + **star explosion** (code-generated) + sound → "all done" → back to the main game.
 - Audio is interrupt-based and **never locks input** here, so quick tidying never waits.
 
-**Audio status:** Tidy's `tidy_chosen_1–3`, `item_name_*`, `in_it_goes_1/2`, `next_one_1`, `well_done_1` and Catch's `boing_1/2` are recorded. Still to record: all Catch voice, and Tidy's `tidy_oops_*`, `all_tidy_*`, `in_it_goes_3`, `plop`, `celebrate` (synth/timer/fallback meanwhile). See `assets-to-create.md`.
+**Audio status:** Tidy's `tidy_chosen_1–3`, `item_name_*`, `in_it_goes_1/2`, `next_one_1`, `well_done_1` and Catch's `boing_1/2` are recorded. Still to record: all Catch voice, and Tidy's `tidy_oops_*`, `all_tidy_*`, `in_it_goes_3`, `plop`, `celebrate` (synth/timer/fallback meanwhile). See `assets-list.md`.
 
 **Dev shortcut:** open `index.html?mini` to jump straight to the mini-game without clearing 3 trays. Remove before final release.
 

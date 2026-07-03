@@ -4,6 +4,13 @@ History of decisions and plan changes. Short entries: what changed and why.
 
 ---
 
+## 2026-07-03 — Assets doc tidy-up
+
+**Consolidated asset reference renamed**
+Verified the asset list against what's actually on disk (52 audio, 36 images, 1 font — all match) and confirmed it already reconciles the two design-time sub-docs (`mini-game-assets.md`, `tidy-game-assets.md`), which are now stale and superseded. No content corrections were needed. Renamed `assets-to-create.md` → `assets-list.md` (it now documents what exists, not just what's outstanding) and updated the references in `CLAUDE.md` and `game-plan.md`. The two superseded sub-docs are being removed.
+
+---
+
 ## 2026-06-29 — Tidy Time mini-game, exit button, font, PWA caching
 
 **Tidy Time — second mini-game (`TidyScene`)**

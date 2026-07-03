@@ -56,7 +56,7 @@ Open on a phone or phone-emulator in the browser. Desktop works for development 
     /audio                  ← 52 MP3s (see Asset reference below)
     /fonts                  ← quicksand-700.woff2 (self-hosted, for offline)
   /planning_docs            ← reference docs only, not part of the game
-    game-plan.md, changelog.md, assets-to-create.md
+    game-plan.md, changelog.md, assets-list.md
     ball-game-plan.md, mini-game-assets.md           (Catch design + assets)
     tidy-game-plan.md, tidy-game-assets.md           (Tidy design + assets)
     build-checklist.docx
@@ -166,7 +166,7 @@ Catch mini-game (2): `boing_1.mp3`, `boing_2.mp3` (wall-bounce SFX)
 
 Tidy mini-game (12): `tidy_chosen_1–3.mp3`, `item_name_ball/book/blocks/car/teddy.mp3`, `in_it_goes_1.mp3`, `in_it_goes_2.mp3`, `next_one_1.mp3`, `well_done_1.mp3`
 
-All audio is UK English (biscuit, juice, etc.). For the full list of what each clip says (transcribed from the audio) and what's still to record, see `planning_docs/assets-to-create.md`.
+All audio is UK English (biscuit, juice, etc.). For the full list of what each clip says (transcribed from the audio) and what's still to record, see `planning_docs/assets-list.md`.
 
 ## PWA
 
