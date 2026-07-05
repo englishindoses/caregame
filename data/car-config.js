@@ -8,4 +8,5 @@ const CAR_CONFIG = {
     INDICATOR_TIMEOUT_MS: 6000,  // auto-off after this long
     INDICATOR_TICK_MS:    560,   // tick-tock interval
     PARALLAX_MAX_PX:      42,    // max scenery shift at full lock
+    AUTO_END_MS:          60000, // auto-return to the main game after this long (WIP — tuning with testing)
 };

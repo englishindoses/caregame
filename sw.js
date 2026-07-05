@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tcm-v9';
+const CACHE_NAME = 'tcm-v10';
 
 const ASSETS = [
     './',
@@ -14,6 +14,8 @@ const ASSETS = [
     './scenes/MiniGameSelectScene.js',
     './scenes/CatchScene.js',
     './scenes/TidyScene.js',
+    './scenes/CarScene.js',
+    './data/car-config.js',
     './manifest.json',
     './assets/fonts/quicksand-700.woff2',
 
@@ -38,6 +40,8 @@ const ASSETS = [
     './assets/images/bunny_sleeping.webp',
     './assets/images/bunny_jumping.webp',
     './assets/images/item_apple.webp',
+    './assets/images/car_dashboard.webp',
+    './assets/images/car_steering_wheel.webp',
 
     // Images – PNG (items)
     './assets/images/item_yogurt.png',

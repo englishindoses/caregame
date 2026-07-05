@@ -78,8 +78,16 @@ class CarScene extends Phaser.Scene {
             else this.sound.once('unlocked', () => this._engine && this._engine.play());
         }
 
+        // Auto-return to the main game after a set play time (parent will tune
+        // this after testing). Manual exit via the door menu still works too.
+        this._autoEnd = this.time.delayedCall(CAR_CONFIG.AUTO_END_MS, () => this.autoEnd());
+
         // Cleanly undo the landscape flip and stop loops on the way out.
         this.events.once('shutdown', () => this.teardown());
+    }
+
+    autoEnd() {
+        this.scene.start('PlayScene', { characterId: this.characterId, fromMinigame: true });
     }
 
     // ── Scenery (placeholder shapes; swap for art later) ─────────────────────
@@ -122,13 +130,16 @@ class CarScene extends Phaser.Scene {
         // toward the viewer (redrawn each frame in update()) so the world moves.
         this.roadFx = this.add.graphics().setDepth(5);
         this.layers.push({ g: this.roadFx, factor: 1.0 });
-        this._scrollSpeed = 0.5;                 // t-units/sec (0 = horizon, 1 = nearest)
+        this._scrollSpeed = 0.42;                // t-units/sec (0 = horizon, 1 = nearest)
         this._dashes = [];
         for (let i = 0; i < 7; i++) this._dashes.push({ t: i / 7 });
         this._bushes = [];
         for (let i = 0; i < 6; i++) {
             this._bushes.push({ t: i / 6, side: i % 2 ? 1 : -1, r: Phaser.Math.Between(16, 30) });
         }
+        // A single tree drifts past now and then, alternating side with a gap
+        // (so there's never one on both sides at once). Starts below the horizon.
+        this._tree = { t: -0.9, side: 1 };
     }
 
     // Project a point on the road: t (0 horizon → 1 nearest), laneFrac (0 centre,
@@ -145,7 +156,14 @@ class CarScene extends Phaser.Scene {
         const g = this.roadFx;
         g.clear();
 
-        // Roadside bushes first, so the dashes sit in front of them.
+        // Occasional tree (further out than the bushes). Alternates side + waits
+        // a beat between appearances so there's never one on both sides at once.
+        const tr = this._tree;
+        tr.t += this._scrollSpeed * 0.85 * dt;
+        if (tr.t > 1) { tr.t = -0.9; tr.side *= -1; }
+        if (tr.t >= 0) this.drawTree(g, tr.t, tr.side);
+
+        // Roadside bushes, so the dashes sit in front of them.
         this._bushes.forEach(b => {
             b.t += this._scrollSpeed * 0.85 * dt;
             if (b.t > 1) { b.t -= 1; b.r = Phaser.Math.Between(16, 30); }
@@ -165,6 +183,19 @@ class CarScene extends Phaser.Scene {
             const h = Phaser.Math.Linear(6, 46, d.t);
             g.fillRect(p.x - w / 2, p.y - h / 2, w, h);
         });
+    }
+
+    drawTree(g, t, side) {
+        const p = this.roadProject(t, side * 1.45);   // out beyond the verge (clear of the dash hood)
+        const s = p.scale;
+        const th = 62 * s, tw = 14 * s;
+        g.fillStyle(0x8a5a3b, 1);
+        g.fillRect(p.x - tw / 2, p.y - th, tw, th);               // trunk
+        const cyc = p.y - th;
+        g.fillStyle(0x4f8a3a, 1); g.fillCircle(p.x, cyc - 20 * s, 40 * s);
+        g.fillStyle(0x5f9e46, 1);
+        g.fillCircle(p.x - 22 * s, cyc - 2 * s, 28 * s);
+        g.fillCircle(p.x + 22 * s, cyc - 4 * s, 26 * s);
     }
 
     updateParallax() {
@@ -278,7 +309,7 @@ class CarScene extends Phaser.Scene {
 
         // Horn nested in the wheel's hub, raised a little so it sits higher on it.
         const hornR = R * 0.24;
-        const hornY = -R * 0.10;
+        const hornY = -R * 0.10 - 4;
         const horn = this.add.circle(0, hornY, hornR, 0xd94b4b).setStrokeStyle(6, 0xa83232);
         horn.setInteractive({ useHandCursor: true });
         horn.on('pointerdown', (p, lx, ly, ev) => {
@@ -329,7 +360,7 @@ class CarScene extends Phaser.Scene {
 
     buildIndicatorLights() {
         const cx = this._wheelCx, cy = this._wheelCy, R = this._wheelR;
-        const y  = cy - R * 0.55;      // up in the open area behind the wheel spokes
+        const y  = cy - R * 0.55 + 3;  // up in the open area behind the wheel spokes
         const dx = R * 0.30;
         this._tellLeft  = this.makeTell(cx - dx, y, '◀');
         this._tellRight = this.makeTell(cx + dx, y, '▶');
@@ -382,7 +413,7 @@ class CarScene extends Phaser.Scene {
 
     buildStalks() {
         const cx = this._wheelCx, cy = this._wheelCy, R = this._wheelR;
-        const y = cy - R * 0.50;
+        const y = cy - R * 0.50 + 25;
         this._stalkTilt = Phaser.Math.DegToRad(17);
         this._stalkLen  = R * 0.66;
         this._wiperStalk = this.makeStalk(cx - R * 0.78, y, -1, 'wiper', '💧');
@@ -401,6 +432,7 @@ class CarScene extends Phaser.Scene {
             const dy = p.y - s.startY, TH = 22;
             if      (dy < -TH) this.stalkAction(s, 'up');
             else if (dy >  TH) this.stalkAction(s, 'down');
+            else if (s.kind === 'indicator' && this._indicator) this.stopIndicator();  // a tap cancels
             else               this.settleStalk(s);
         });
     }
@@ -429,10 +461,11 @@ class CarScene extends Phaser.Scene {
     }
 
     // Rest/held rotation for a stalk given the current state.
+    // Indicator stalk: push UP = left, DOWN = right.
     stalkRestRotation(s) {
         if (s.kind === 'wiper') return 0;
-        if (this._indicator === 'right') return -s.outSign * this._stalkTilt;  // up
-        if (this._indicator === 'left')  return  s.outSign * this._stalkTilt;  // down
+        if (this._indicator === 'left')  return -s.outSign * this._stalkTilt;  // up
+        if (this._indicator === 'right') return  s.outSign * this._stalkTilt;  // down
         return 0;
     }
 
@@ -450,7 +483,7 @@ class CarScene extends Phaser.Scene {
             this.startWipers();
             this.settleStalk(s);                                 // momentary — springs back
         } else {
-            this.setIndicator(dir === 'up' ? 'right' : 'left');  // setIndicator settles the stalk
+            this.setIndicator(dir === 'up' ? 'left' : 'right');  // setIndicator settles the stalk
         }
     }
 
