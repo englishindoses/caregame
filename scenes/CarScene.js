@@ -253,7 +253,7 @@ class CarScene extends Phaser.Scene {
             // behind it (lower depth) and shows through the transparent
             // windscreen arch, blending into the open scenery above the frame.
             const img = this.add.image(W / 2, H, 'car_dashboard').setOrigin(0.5, 1).setDepth(10);
-            img.setScale(W / img.width);
+            img.setScale((W * CAR_CONFIG.DASH_WIDTH_FRAC) / img.width);   // proportional (uniform) scale
             return;
         }
         // Fallback drawn frame (placeholder until the art exists).
