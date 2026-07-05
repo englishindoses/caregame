@@ -34,6 +34,10 @@ class BootScene extends Phaser.Scene {
             this.load.audio(item.audio, `assets/audio/${item.audio}.mp3`);
         });
 
+        // Main-game voice only. Mini-game assets are NOT loaded here — each
+        // mini-game scene loads its own in its preload() (and the mini-game
+        // select screen loads its tile art + "let's play" lines), so boot stays
+        // lean and only pays for what the child actually opens.
         [
             ...PHRASES.thankYou,
             ...PHRASES.thankYouFood,
@@ -41,20 +45,6 @@ class BootScene extends Phaser.Scene {
             ...PHRASES.thankYouToys,
             ...PHRASES.wrong,
             ...PHRASES.sleepy,
-            // Catch mini-game (files added later — missing keys just no-op).
-            ...PHRASES.playInvite,
-            ...PHRASES.playCatch,
-            ...PHRASES.catchExcite,
-            ...PHRASES.playerCatch,
-            ...PHRASES.playTired,
-            // Tidy mini-game (files added later — missing keys just no-op).
-            ...PHRASES.tidyChosen,
-            ...PHRASES.tidyOpening,
-            ...Object.values(PHRASES.tidyName),
-            ...PHRASES.inItGoes,
-            ...PHRASES.nextOne,
-            ...PHRASES.tidyOops,
-            ...PHRASES.allTidy,
         ].forEach(key => {
             this.load.audio(key, `assets/audio/${key}.mp3`);
         });
@@ -62,12 +52,6 @@ class BootScene extends Phaser.Scene {
         PHRASES.chosen.forEach(key => {
             this.load.audio(key, `assets/audio/${key}.mp3`);
         });
-        this.load.audio('boing_1',   'assets/audio/boing_1.mp3');    // Catch wall-bounce SFX (random of 2)
-        this.load.audio('boing_2',   'assets/audio/boing_2.mp3');
-        this.load.audio('plop',      'assets/audio/plop.mp3');       // Tidy drop SFX (added later)
-        this.load.audio('celebrate', 'assets/audio/celebrate.mp3');  // Tidy finish SFX (synth fallback until added)
-        this.load.image('toy_box_closed', 'assets/images/toy_box_closed.png');
-        this.load.image('toy_box_open',   'assets/images/toy_box_open.png');
     }
 
     create() {

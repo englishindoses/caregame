@@ -13,6 +13,24 @@ class CatchScene extends Phaser.Scene {
         this.sound.mute  = localStorage.getItem('tcm_mute') === '1';
     }
 
+    // Catch's own assets — loaded on selection, not at boot. Ball art and the
+    // character sprites are main-game assets already in memory; only the catch
+    // voice and the wall-bounce SFX are loaded here (missing files just no-op).
+    preload() {
+        if (!this._miniLoadHooked) {
+            this._miniLoadHooked = true;
+            this.load.on('loaderror', f => console.warn(`Missing asset: ${f.key}`));
+        }
+        [
+            ...PHRASES.catchExcite,
+            ...PHRASES.playerCatch,
+            ...PHRASES.playTired,
+            'boing_1', 'boing_2',
+        ].forEach(key => {
+            if (!this.cache.audio.exists(key)) this.load.audio(key, `assets/audio/${key}.mp3`);
+        });
+    }
+
     create() {
         const W = this.scale.width;
         const H = this.scale.height;

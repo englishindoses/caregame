@@ -24,7 +24,8 @@ Open on a phone or phone-emulator in the browser. Desktop works for development 
 - **Arcade Physics** enabled in `main.js` (no gravity by default) — used by the Catch mini-game (no gravity) and the Tidy mini-game (per-scene gravity for falling toys)
 - **Vanilla JS** — plain `<script>` tags loaded in order, no ES modules, no `import`/`export`
 - Everything on the **global scope** — scenes, data constants, shared helpers (e.g. `addDoorButton`)
-- **720 × 1280** reference resolution, portrait, `Scale.FIT` mode
+- **720 × 1280** reference resolution, portrait, `Scale.FIT` mode. Exception: the **Little Driver** (car) mini-game flips the game to **1280 × 720 landscape** on entry (`this.scale.setGameSize`) and restores portrait on exit.
+- **Asset loading is split:** BootScene loads only the **main-game** assets; each **mini-game loads its own assets on demand** in its scene's `preload()` (and the mini-game select screen loads its tile art + "let's play" lines). Boot stays lean; a mini-game only pays for its assets when the child opens it. Payloads are small enough that no loading screen is needed on the mini-game scenes.
 - Assets: WebP (converted images) with PNG fallback for unconverted images; MP3 audio
 - **Self-hosted web font** — Quicksand (OFL) at `assets/fonts/quicksand-700.woff2`, declared via `@font-face` in `index.html` and awaited in BootScene before scenes render (Phaser draws text to canvas, so the font must be loaded first). Used for the Tidy toy-name reveal.
 - **PWA** — `manifest.json` + `sw.js` service worker; installable on Android/iOS, works offline. Service worker is **network-first for code** (HTML/JS) and **cache-first for media** (images/audio/fonts) — see **PWA** below
@@ -39,42 +40,46 @@ Open on a phone or phone-emulator in the browser. Desktop works for development 
   sw.js                     ← service worker (pre-caches all assets for offline play)
   CLAUDE.md                 ← this file
   /scenes
-    BootScene.js            ← loads all assets, awaits the web font, progress bar, skips SelectScene if character saved; ?mini dev shortcut
+    BootScene.js            ← loads the main-game assets only, awaits the web font, progress bar, skips SelectScene if character saved; ?mini dev shortcut
     SelectScene.js          ← character picker (3 characters, idle bounce)
     PlayScene.js            ← main game loop; breaks to the mini-game after 3 cleared trays
-    MiniGameSelectScene.js  ← "What shall we play?" screen (tappable mini-game tiles)
-    CatchScene.js           ← Catch mini-game (Arcade Physics, no gravity)
-    TidyScene.js            ← Tidy Time mini-game (Arcade Physics + gravity)
-    doorButton.js           ← shared addDoorButton(scene) helper (hold-to-exit), used by all mini-game scenes
+    MiniGameSelectScene.js  ← "What shall we play?" screen (tappable mini-game tiles); preloads tile art + "let's play" lines
+    CatchScene.js           ← Catch mini-game (Arcade Physics, no gravity); preloads its own audio
+    TidyScene.js            ← Tidy Time mini-game (Arcade Physics + gravity); preloads its own art + audio
+    CarScene.js             ← Little Driver mini-game (landscape; steer/horn/wipers/indicators); preloads its own art + audio
+    doorButton.js           ← shared addDoorButton(scene) helper (hold-to-exit), used by Catch, Tidy, MiniGameSelect (Car has its own exit menu)
   /data
     items.js                ← ITEMS array (15 items)
     characters.js           ← CHARACTERS array (3 characters; image keys + per-character `emotions` list)
-    phrases.js              ← PHRASES object (category thank-you arrays, wrong, sleepy, allDone, chosen, + Catch/Tidy mini-game arrays)
-    minigames.js            ← MINIGAMES array (mini-game tiles for the select screen; catch + tidy)
+    phrases.js              ← PHRASES object (category thank-you arrays, wrong, sleepy, allDone, chosen, + Catch/Tidy/Car mini-game arrays)
+    minigames.js            ← MINIGAMES array (mini-game tiles for the select screen; catch + tidy + car)
+    car-config.js           ← CAR_CONFIG tunables for the Little Driver mini-game (wheel angle, wiper/indicator timing, parallax)
   /assets
-    /images                 ← 36 images: 20 WebP + 16 PNG (see Asset reference below)
+    /images                 ← 38 images: 22 WebP + 16 PNG (see Asset reference below)
     /audio                  ← 52 MP3s (see Asset reference below)
     /fonts                  ← quicksand-700.woff2 (self-hosted, for offline)
   /planning_docs            ← reference docs only, not part of the game
     game-plan.md, changelog.md, assets-list.md
     ball-game-plan.md, mini-game-assets.md           (Catch design + assets)
     tidy-game-plan.md, tidy-game-assets.md           (Tidy design + assets)
+    car-game-plan.md                                 (Little Driver design)
     build-checklist.docx
 ```
 
 ## Architecture
 
-**Scene flow:** BootScene → SelectScene → PlayScene → (after 3 trays) → MiniGameSelectScene → (CatchScene | TidyScene) → PlayScene.
+**Scene flow:** BootScene → SelectScene → PlayScene → (after 3 trays) → MiniGameSelectScene → (CatchScene | TidyScene | CarScene) → PlayScene.
 
-- BootScene loads all assets with a progress bar. If a character is saved in `localStorage`, it skips SelectScene and goes straight to PlayScene. The `?mini` URL flag jumps straight to MiniGameSelectScene (dev shortcut — remove before final release).
+- BootScene loads the **main-game** assets with a progress bar (mini-game assets are lazy-loaded — see **Mini-games**). If a character is saved in `localStorage`, it skips SelectScene and goes straight to PlayScene. The `?mini` URL flag jumps straight to MiniGameSelectScene (dev shortcut — remove before final release).
 - SelectScene shows the 3 characters with idle bounce animations. Tapping one triggers a scale pulse and starts PlayScene with `{ characterId, fromSelect: true }`.
 - PlayScene runs the full game loop. Character choice is persisted in `localStorage`. After 3 trays are cleared it breaks to the mini-game (see **Mini-games** below) and resumes afterwards.
 
 **Data conventions:**
 - `ITEMS` — 15 items, each `{ id, name, request, image, audio, category }`
 - `CHARACTERS` — 3 characters, each `{ id, name, color, neutral, needy, happy, emotions }`. `neutral/needy/happy` are image keys; `emotions` is the array of every emotion that character has artwork for (`['neutral','needy','happy','sleepy','sleeping','jumping']`). `emotions` is the single source of truth: BootScene loads `${id}_${emotion}.webp` for each entry, and `setCharEmotion` falls back to the happy face if asked for an emotion the character doesn't have.
-- `PHRASES` — main-game `{ thankYou, thankYouFood, thankYouComfy, thankYouToys, wrong, sleepy, allDone, chosen, nextChosen() }`, the **Catch** arrays `{ playInvite, playCatch, catchExcite, playerCatch, playTired }`, and the **Tidy** keys `{ tidyChosen (tile line, `tidy_chosen_1`), tidyOpening (in-scene, `tidy_chosen_2/3`, cycled via `nextTidyOpening()`), tidyName (object keyed by toy id → `item_name_*`), inItGoes, nextOne, tidyOops, allTidy }`. Category thank-you arrays are picked by the item's `category`. `nextChosen()` / `nextTidyOpening()` cycle (not random). BootScene loads the `tidyName` object via `Object.values(...)`.
-- `MINIGAMES` — array of mini-game tiles for MiniGameSelectScene, each `{ id, name, image, chosenGroup, scene, tileScale? }`. `chosenGroup` is the PHRASES key for the "let's play" line; `scene` is the scene to launch; optional `tileScale` enlarges that tile (tidy uses 1.4). Both `catch` and `tidy` are wired; the select-screen layout adapts to up to 4 tiles, and a tile whose image is missing renders a coloured placeholder box.
+- `PHRASES` — main-game `{ thankYou, thankYouFood, thankYouComfy, thankYouToys, wrong, sleepy, allDone, chosen, nextChosen() }`, the **Catch** arrays `{ playInvite, playCatch, catchExcite, playerCatch, playTired }`, and the **Tidy** keys `{ tidyChosen (tile line, `tidy_chosen_1`), tidyOpening (in-scene, `tidy_chosen_2/3`, cycled via `nextTidyOpening()`), tidyName (object keyed by toy id → `item_name_*`), inItGoes, nextOne, tidyOops, allTidy }`, and the **Car** key `{ driveChosen (tile line, `drive_chosen_*`, unrecorded so silent) }`. Category thank-you arrays are picked by the item's `category`. `nextChosen()` / `nextTidyOpening()` cycle (not random). The `tidyName` object is loaded via `Object.values(...)` in TidyScene's preload.
+- `MINIGAMES` — array of mini-game tiles for MiniGameSelectScene, each `{ id, name, image, chosenGroup, scene, tileScale?, imageSrc? }`. `chosenGroup` is the PHRASES key for the "let's play" line; `scene` is the scene to launch; optional `tileScale` enlarges that tile (tidy uses 1.4); optional `imageSrc` is the path for a tile image that **isn't** a main-game asset (tidy's `toy_box_closed`), which the select screen loads itself (item-image tiles like the ball and car are already in memory). `catch`, `tidy` and `car` are all wired; the select-screen layout adapts to up to 4 tiles, and a tile whose image is missing renders a coloured placeholder box. The `car` tile reuses the existing `item_car` art.
+- `CAR_CONFIG` (in `data/car-config.js`) — tunables for the Little Driver mini-game: `WHEEL_MAX_DEG`, `WHEEL_RETURN_MS`, `WIPER_CYCLES`, `WIPER_SWEEP_MS`, `INDICATOR_TIMEOUT_MS`, `INDICATOR_TICK_MS`, `PARALLAX_MAX_PX`.
 
 **Item randomisation:** shuffled-deck approach — all 15 items shuffled at game start, dealt 3 at a time. Reshuffle when all 15 have been seen.
 
@@ -103,13 +108,15 @@ Open on a phone or phone-emulator in the browser. Desktop works for development 
 
 **Character switcher:** Two small thumbnails of the non-active characters sit in the top-left corner, stacked vertically. Tapping one switches the active character mid-game (updates `this.characterId`, swaps the sprite texture, saves to `localStorage`, rebuilds the switcher).
 
-**Door button (hold-to-exit):** Small semi-transparent door icon in the top-right corner. Hold for 2 seconds — a subtle arc draws during the hold. On completion, clears the saved character from `localStorage` and goes straight to SelectScene. PlayScene has its own copy; the **mini-game scenes** (Catch, Tidy, MiniGameSelect) call the shared `addDoorButton(this)` from `scenes/doorButton.js`.
+**Door button (hold-to-exit):** Small semi-transparent door icon in the top-right corner. Hold for 2 seconds — a subtle arc draws during the hold. On completion, clears the saved character from `localStorage` and goes straight to SelectScene. PlayScene has its own copy; the **Catch, Tidy and MiniGameSelect** scenes call the shared `addDoorButton(this)` from `scenes/doorButton.js`. **CarScene is the exception** — its top-right door **taps to open an exit menu** (Main Game / Mini-Game Select / Character Select) rather than hold-to-exit, since the car has more places to return to.
 
 **Responsive layout:** All element positions and sizes derived from `this.scale.width` / `this.scale.height`. Never hard-coded pixels for layout. `Scale.FIT` mode scales the whole canvas uniformly.
 
 ## Mini-games
 
 After PlayScene clears 3 trays (`traysCleared` counter), it starts `MiniGameSelectScene` instead of dealing the next tray. Returning to PlayScene with `{ fromMinigame: true }` resumes the main loop without replaying the chosen-audio intro (it falls through to the normal "deal a tray" path).
+
+**Per-scene asset loading.** No mini-game assets load at boot. Each mini-game scene's `preload()` loads exactly its own assets (guarded by `!this.cache.audio.exists` / `!this.textures.exists` so nothing loads twice); `MiniGameSelectScene.preload()` loads the select-screen's own bits (tile art that isn't a main-game asset + the `playInvite` invite and every tile's `chosenGroup` line). Character sprites and item images (ball, car, toys) are main-game assets already in memory, so mini-games reuse them for free. Each preload registers a `loaderror` handler that just logs — a missing (unrecorded) file no-ops and the code falls back (synth SFX / timers / a spoken fallback line).
 
 **MiniGameSelectScene** — "What shall we play?" screen on the same bedroom background. The chosen character bobs small in the bottom-left. Each entry in `MINIGAMES` becomes a tappable tile; the **tile image itself is the hit target** (its full bounding box, so a child can tap anywhere on it), and a missing image renders a coloured placeholder box. The grid adapts for 1–4 tiles. Tapping a tile plays its `chosenGroup` line, then starts that mini-game's scene. Has the hold-to-exit door button.
 
@@ -129,16 +136,26 @@ After PlayScene clears 3 trays (`traysCleared` counter), it starts `MiniGameSele
 - **Final toy:** name comes up first → tap → box closes, **star-particle explosion** (generated texture) + celebration sound (synth sparkle, or `celebrate.mp3`) → an "all done" line (`all_tidy_*` if recorded, else `all_done`/`well_done_1`) → back to PlayScene.
 - **Audio is interrupt-based, never queued, and never locks input** in this scene — a briskly-tidying toddler is never made to wait.
 
-**Mini-game audio — partially recorded.** Present: Tidy's `tidy_chosen_1/2/3`, `item_name_*`, `in_it_goes_1/2`, `next_one_1`, `well_done_1`, and Catch's `boing_1/2`. Still missing (run on synth/timers/fallbacks): all Catch voice (`play_invite/play_catch/catch_excite/player_catch/play_tired`), and Tidy's `tidy_opening_*` (superseded by `tidy_chosen_2/3`), `tidy_oops_*`, `all_tidy_*`, `in_it_goes_3`, `plop`, `celebrate`. BootScene attempts all keys (a `loaderror` is logged + ignored) and the code no-ops / falls back on any missing clip. When recording more: drop files in `assets/audio/`, and (for offline pre-cache) add paths to `sw.js` + bump `CACHE_NAME`.
+**CarScene (Little Driver)** — a pretend-driving toy: first-person view from the driver's seat with a windscreen on top and a dashboard + steering wheel below. No fail states, no scoring. Key points:
+- **Landscape only.** On entry it flips the game to **1280 × 720** (`this.scale.setGameSize`) and tries `screen.orientation.lock('landscape')`; on exit (`teardown`, wired to `shutdown`) it restores 720 × 1280 and unlocks. A **rotate-your-phone** overlay covers the scene while the device is held portrait (iOS Safari can't lock, so this is the fallback). Layout is derived from the landscape `W`/`H`.
+- **Art:** `car_dashboard` (full-bleed frame with a **transparent windscreen hole** the road shows through) and `car_steering_wheel` (rotates), both WebP. The scenery behind the windscreen (sky / hills / grass / perspective road with dashes + roadside bushes) is **code-drawn** placeholder art. Every control still has a **drawn fallback** if the image is missing.
+- **Steering:** drag the wheel to rotate (±`WHEEL_MAX_DEG`, clamped), spring-back-to-centre on release (`Back.easeOut`); the scenery layers shift a few px (parallax) with the wheel angle. A non-rotating circular hit-zone under the wheel handles the drag; the horn sits on top and grabs centre taps.
+- **Horn:** big button nested in the wheel hub, rotates with the wheel, `playHorn()` (recorded `horn.mp3` if present, else a synthesized two-tone beep), scale-pulse feedback. Snappy on rapid presses (stops the prior sound).
+- **Wipers:** code-drawn blades, tap the wiper button → 3 sweeps then stop; `playSwish()` per sweep (audio or synth). **Indicators:** left/right buttons glow + tick (`playTick()`), auto-off after `INDICATOR_TIMEOUT_MS`, tapping the same side or the opposite side cancels.
+- **Audio is fire-and-forget and never locks input** (like Tidy) — everything is interactive at once. Missing clips fall back to Web-Audio synth (`_tone`).
+- **Exit:** its own **tap-to-open menu** (Main Game / Mini-Game Select / Character Select), not the shared hold-to-exit. There is **no automatic ending yet** (unlike Catch/Tidy) — a deferred TODO noted in `car-game-plan.md`.
+
+**Mini-game audio — partially recorded.** Present: Tidy's `tidy_chosen_1/2/3`, `item_name_*`, `in_it_goes_1/2`, `next_one_1`, `well_done_1`, and Catch's `boing_1/2`. Still missing (run on synth/timers/fallbacks): all Catch voice (`play_invite/play_catch/catch_excite/player_catch/play_tired`); Tidy's `tidy_opening_*` (superseded by `tidy_chosen_2/3`), `tidy_oops_*`, `all_tidy_*`, `in_it_goes_3`, `plop`, `celebrate`; and all Car audio (`horn`, `wiper_swish`, `indicator_tick`, `engine_hum`, `drive_chosen_*`). Each scene's `preload()` attempts its own keys (a `loaderror` is logged + ignored) and the code no-ops / falls back on any missing clip. When recording more: drop files in `assets/audio/`, and (for offline pre-cache) add paths to `sw.js` + bump `CACHE_NAME`.
 
 ## Asset reference
 
-**36 images** in `assets/images/`. Background and all character images are WebP; items + toy box are PNG except `item_apple`. BootScene loads characters as WebP by key convention and uses a small WebP set (`bg_room`, `item_apple`) for the rest.
+**38 images** in `assets/images/`. Background, all character images and the two car-mini-game images are WebP; items + toy box are PNG except `item_apple`. BootScene loads the main-game images (characters as WebP by key convention; a small WebP set — `bg_room`, `item_apple` — for the rest); the car images are loaded on demand by CarScene, and `toy_box_*` by TidyScene / the select screen.
 
-WebP (20):
+WebP (22):
 - `bg_room.webp`
 - Each character × 6 emotions: `dolly_*`, `giraffe_*`, `bunny_*` where `* = neutral, needy, happy, sleepy, sleeping, jumping` (18 files)
 - `item_apple.webp`
+- **Little Driver:** `car_dashboard.webp` (dashboard frame with a transparent windscreen hole), `car_steering_wheel.webp` (rotating wheel). Loaded by CarScene only. *(Converted from the original PNGs — ~4 MB PNG → ~0.4 MB WebP.)*
 
 PNG (16 — items + toy box):
 - `item_yogurt.png`, `item_banana.png`, `item_sandwich.png`, `item_biscuit.png`
@@ -148,7 +165,7 @@ PNG (16 — items + toy box):
 - `item_book.png`, `item_ball.png`, `item_blocks.png`, `item_car.png`
 - `toy_box_closed.png`, `toy_box_open.png` (Tidy mini-game; also the Tidy select tile)
 
-The Tidy celebration stars are **generated in code** (no image asset). The Tidy toy-name text uses the self-hosted font `assets/fonts/quicksand-700.woff2`.
+The Tidy celebration stars are **generated in code** (no image asset). The Tidy toy-name text uses the self-hosted font `assets/fonts/quicksand-700.woff2`. The Little Driver **scenery** (sky, hills, grass, perspective road + roadside bushes) is also **code-drawn** for now — dedicated `car_sky/hills/roadside/road` art is optional polish (see `car-game-plan.md`).
 
 **52 audio files** in `assets/audio/`:
 
@@ -165,6 +182,8 @@ Misc (4): `all_done.mp3`, `chosen.mp3`, `chosen_2.mp3`, `chosen_3.mp3`
 Catch mini-game (2): `boing_1.mp3`, `boing_2.mp3` (wall-bounce SFX)
 
 Tidy mini-game (12): `tidy_chosen_1–3.mp3`, `item_name_ball/book/blocks/car/teddy.mp3`, `in_it_goes_1.mp3`, `in_it_goes_2.mp3`, `next_one_1.mp3`, `well_done_1.mp3`
+
+Little Driver mini-game (0 recorded): `horn`, `wiper_swish`, `indicator_tick`, `engine_hum`, `drive_chosen_1/2` are all **still to record** — the scene runs on synthesized tones until they exist.
 
 All audio is UK English (biscuit, juice, etc.). For the full list of what each clip says (transcribed from the audio) and what's still to record, see `planning_docs/assets-list.md`.
 

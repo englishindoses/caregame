@@ -4,6 +4,26 @@ History of decisions and plan changes. Short entries: what changed and why.
 
 ---
 
+## 2026-07-04 — Little Driver (car) mini-game + per-scene asset loading
+
+**Little Driver — third mini-game (`CarScene`)**
+A no-fail pretend-driving toy: first-person driver's view, windscreen on top, dashboard + steering wheel below. Launched from a new `car` tile on the select screen (reuses the existing `item_car` art).
+- **Landscape-only scene:** flips the game to 1280 × 720 on entry (`this.scale.setGameSize`), tries `screen.orientation.lock('landscape')`, and restores portrait + unlocks on exit. A rotate-your-phone overlay covers it while held portrait (the iOS-Safari fallback).
+- **Controls:** drag-to-steer wheel (±120°, clamped, spring-back-to-centre) with subtle scenery parallax; a big **horn** nested in the wheel hub; **wipers** (code-drawn blades, 3-sweep); **left/right indicators** (glow + tick, auto-off after 6s). Audio is fire-and-forget and never locks input; missing clips fall back to **Web-Audio synth** tones (nothing recorded yet: `horn`, `wiper_swish`, `indicator_tick`, `engine_hum`, `drive_chosen_*`).
+- **Exit menu:** the top-right door **taps to open a menu** — Main Game / Mini-Game Select / Character Select — instead of the shared hold-to-exit, since the car has more return destinations. **Automatic ending is a deferred TODO** (unlike Catch's tire-out / Tidy's last-toy) — noted in `car-game-plan.md`.
+- **Art:** user-supplied `car_dashboard` (frame with a transparent windscreen hole the road shows through) and `car_steering_wheel` (renamed from the plan's `car_wheel`). Everything else — sky/hills/grass/road scenery — stays **code-drawn** placeholder for now, and every control keeps a drawn fallback if its image is absent.
+
+**Car images converted PNG → WebP**
+The supplied PNGs were ~2.4 MB + ~1.6 MB. Converted to WebP (~280 KB + ~134 KB, ~90% smaller, identical quality + transparency), matching the project's convention. The scene loads the `.webp`; the originals `car_dashboard.png` / `car_steering_wheel.png` can be deleted.
+
+**Assets now load per-scene, not all at boot**
+BootScene previously loaded *every* asset (main game + all mini-games). Split it: **BootScene loads only the main-game assets**; each mini-game scene's `preload()` loads its own art + audio on demand, and `MiniGameSelectScene.preload()` loads the select-screen's tile art + "let's play" lines. Loads are guarded (`!cache/textures.exists`) so nothing loads twice; character/item art is shared from boot. Boot is leaner and each mini-game only pays for what the child opens. Payloads are small enough that the mini-game scenes need no loading screen. Verified in-browser (Playwright): mini-game assets are absent after boot and appear only once each screen/game is opened.
+
+**Wiring**
+Added `scenes/CarScene.js`, `data/car-config.js` (`CAR_CONFIG` tunables); registered CarScene in `main.js` + `index.html`; `MINIGAMES` gained the `car` tile (+ an `imageSrc` field for non-boot tile art) and `PHRASES` gained `driveChosen`.
+
+---
+
 ## 2026-07-03 — Assets doc tidy-up
 
 **Consolidated asset reference renamed**

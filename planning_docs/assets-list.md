@@ -3,7 +3,7 @@
 The definitive list of game assets: what **exists** and what **still needs to be made**.
 
 - **Audio transcripts below are auto-generated from the actual audio files** (local Whisper), so they reflect what each clip really says — which sometimes differs from the originally-planned script.
-- Counts current as of this update: **52 audio files**, **36 images**.
+- Counts current as of this update: **52 audio files**, **38 images**.
 
 ## Style notes
 
@@ -109,6 +109,10 @@ The definitive list of game assets: what **exists** and what **still needs to be
 | `boing_1.mp3` | *(sound effect — ball bounce)* |
 | `boing_2.mp3` | *(sound effect — ball bounce)* |
 
+### Little Driver mini-game (0 recorded)
+
+None recorded yet — the whole scene runs on synthesized Web-Audio tones. See "Audio still to make" below.
+
 ### Tidy Time mini-game (12)
 
 | Filename | Says |
@@ -173,6 +177,17 @@ The definitive list of game assets: what **exists** and what **still needs to be
 | `plop.mp3` | Soft mid-range "plop"/"thunk" for a toy landing in the box. Heard many times — must stay pleasant on repeat. *(Synth fallback in use.)* |
 | `celebrate.mp3` | Short celebratory sparkle/chime for the all-tidy star burst. *(Synth fallback in use.)* |
 
+### Little Driver mini-game — voice + SFX (all synth/silent until recorded)
+
+| Filename | Description / suggested line |
+|---|---|
+| `horn.mp3` | Cheerful car horn "beep beep". **Pressed constantly** — must stay pleasant on rapid repeat. *(Synth two-tone beep in use.)* |
+| `wiper_swish.mp3` | Soft windscreen-wiper "swish", low volume, plays once per sweep. *(Synth in use.)* |
+| `indicator_tick.mp3` | Gentle indicator "tick-tock", loops while an indicator is on. *(Synth in use.)* |
+| `engine_hum.mp3` *(optional)* | Quiet looping engine hum for ambience (gain ~0.15). *(No fallback — silent until added.)* |
+| `drive_chosen_1.mp3` | Tapped the car tile — "Let's go for a drive!" *(Silent until recorded.)* |
+| `drive_chosen_2.mp3` | "Beep beep! Time to drive!" *(Silent until recorded.)* |
+
 ### Optional polish
 
 | Filename | Description |
@@ -183,7 +198,7 @@ The definitive list of game assets: what **exists** and what **still needs to be
 
 # IMAGES
 
-## ✅ Images we have (36 files)
+## ✅ Images we have (38 files)
 
 ### Background (1)
 - `bg_room.webp` — cosy bedroom: pastel walls, round fluffy rug (top ~53%, bottom ~68%), bookshelf + baskets left, cushion + teddy right, clear foreground floor. Wall/floor line ~50%.
@@ -206,6 +221,12 @@ The definitive list of game assets: what **exists** and what **still needs to be
 
 > The celebration **stars are generated in code** (no image asset needed).
 
+### Little Driver (2 — `.webp`, transparent where noted)
+- `car_dashboard.webp` — 1536×1024 dashboard frame (driver POV) with painted gauges/buttons and a **transparent windscreen hole** the road view shows through. Full-bleed, anchored to the top.
+- `car_steering_wheel.webp` — 1024×1024 steering wheel on a transparent background; rotates with steering.
+
+> Both converted from the originally-supplied PNGs (~4 MB → ~0.4 MB total). The car **scenery** (sky/hills/grass/road) is **code-drawn**, not an asset. Renamed from the plan's `car_wheel` → `car_steering_wheel`.
+
 ### Font (1)
 - `assets/fonts/quicksand-700.woff2` — Quicksand 700 (Google Fonts, OFL). Self-hosted (so the PWA works offline) for the Tidy toy-name reveal. Single-story "a".
 
@@ -214,8 +235,9 @@ The definitive list of game assets: what **exists** and what **still needs to be
 | Filename | Description |
 |---|---|
 | App icon (e.g. `icon_512.png`) | Proper **512×512** PWA icon — all three characters together on the `#F2E4D4` background. Currently `manifest.json` falls back to `dolly_happy`. |
+| `car_sky/hills/roadside/road` *(optional polish)* | Art versions of the Little Driver scenery layers (seamless horizontal tiles, transparent where they stack) to replace the flat code-drawn placeholders. Not required — the scene is fully playable without them. See `car-game-plan.md` for generation prompts. |
 
-*(No other images are outstanding — the Catch and Tidy mini-games reuse existing art.)*
+*(The Catch and Tidy mini-games reuse existing art. Little Driver uses `car_dashboard` + `car_steering_wheel`; its scenery is code-drawn, with the optional art above as future polish.)*
 
 ---
 
@@ -223,6 +245,6 @@ The definitive list of game assets: what **exists** and what **still needs to be
 
 - **UK English throughout.** Keep spellings/word choices consistent if anything is re-recorded.
 - **Voice consistency.** Match the same narrator voice/settings on any new or re-recorded clip.
-- **Auto-loading.** BootScene loads every key declared in `PHRASES` (and the `MINIGAMES` images) automatically — drop a new file in `assets/audio` or `assets/images` and add its key to `data/phrases.js` / `data/minigames.js`.
+- **Loading is split by scene.** BootScene loads only the **main-game** keys. **Mini-game assets load on demand:** each mini-game scene's `preload()` loads its own art + audio, and `MiniGameSelectScene.preload()` loads the tile art + "let's play" lines. To add a mini-game asset, drop the file in `assets/` and add its key to that scene's `preload()` list (or to `data/phrases.js` / `data/minigames.js` if it's referenced there). Missing files no-op (a `loaderror` is logged and the code falls back).
 - **WebP vs PNG.** The game picks the correct format per asset; don't rename without updating `BootScene.js`.
 - **Offline (PWA).** When the remaining audio lands, add the new paths to `sw.js` `ASSETS` and bump `CACHE_NAME` so installed apps pre-cache them for offline play.

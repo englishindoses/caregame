@@ -11,7 +11,7 @@ const config = {
         default: 'arcade',
         arcade: { gravity: { y: 0 }, debug: false },
     },
-    scene: [BootScene, SelectScene, PlayScene, MiniGameSelectScene, CatchScene, TidyScene]
+    scene: [BootScene, SelectScene, PlayScene, MiniGameSelectScene, CatchScene, TidyScene, CarScene]
 };
 
 new Phaser.Game(config);

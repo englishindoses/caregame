@@ -11,6 +11,28 @@ class MiniGameSelectScene extends Phaser.Scene {
         this.sound.mute  = localStorage.getItem('tcm_mute') === '1';
     }
 
+    // The select screen's own assets — its tile art and the spoken lines (the
+    // "what shall we play?" invite + each tile's "let's play" line). Each
+    // mini-game's *gameplay* assets are loaded later by its own scene. Tile
+    // images that are already main-game assets (item_ball, item_car) are skipped.
+    preload() {
+        if (!this._miniLoadHooked) {
+            this._miniLoadHooked = true;
+            this.load.on('loaderror', f => console.warn(`Missing asset: ${f.key}`));
+        }
+        MINIGAMES.forEach(g => {
+            if (g.imageSrc && !this.textures.exists(g.image)) this.load.image(g.image, g.imageSrc);
+        });
+        const keys = [...PHRASES.playInvite];
+        MINIGAMES.forEach(g => {
+            const pool = PHRASES[g.chosenGroup];
+            if (pool) keys.push(...pool);
+        });
+        keys.forEach(key => {
+            if (!this.cache.audio.exists(key)) this.load.audio(key, `assets/audio/${key}.mp3`);
+        });
+    }
+
     create() {
         const W = this.scale.width;
         const H = this.scale.height;

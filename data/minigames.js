@@ -14,9 +14,18 @@ const MINIGAMES = [
         id:          'tidy',
         name:        'Tidy',
         image:       'toy_box_closed',
+        imageSrc:    'assets/images/toy_box_closed.png',  // not a main-game asset — select screen loads it
         tileScale:   1.4,           // draw the box tile bigger than the default
         chosenGroup: 'tidyChosen',
         scene:       'TidyScene',
+    },
+    {
+        id:          'car',
+        name:        'Drive',
+        image:       'item_car',    // reuse the existing toy-car art
+        tileScale:   1.1,
+        chosenGroup: 'driveChosen', // silent until drive_chosen_* are recorded
+        scene:       'CarScene',
     },
     // Future: 'story', 'writing' added here.
 ];

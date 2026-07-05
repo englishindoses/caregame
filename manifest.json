@@ -1,6 +1,6 @@
 {
     "name": "My Plushie Friends",
-    "short_name": "Plushie Friends",
+    "short_name": "PlushieFriends",
     "description": "A touch vocabulary game for toddlers",
     "start_url": "./",
     "scope": "./",

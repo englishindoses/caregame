@@ -14,6 +14,33 @@ class TidyScene extends Phaser.Scene {
         this.sound.mute  = localStorage.getItem('tcm_mute') === '1';
     }
 
+    // Tidy's own assets — loaded on selection, not at boot. The toys are
+    // main-game item art already in memory; the toy-box art and every Tidy voice
+    // line / SFX are loaded here (missing files just no-op). toy_box_closed is
+    // also the select-screen tile, so the select scene loads that one itself.
+    preload() {
+        if (!this._miniLoadHooked) {
+            this._miniLoadHooked = true;
+            this.load.on('loaderror', f => console.warn(`Missing asset: ${f.key}`));
+        }
+        [
+            'toy_box_closed', 'toy_box_open',
+        ].forEach(key => {
+            if (!this.textures.exists(key)) this.load.image(key, `assets/images/${key}.png`);
+        });
+        [
+            ...PHRASES.tidyOpening,
+            ...Object.values(PHRASES.tidyName),
+            ...PHRASES.inItGoes,
+            ...PHRASES.nextOne,
+            ...PHRASES.tidyOops,
+            ...PHRASES.allTidy,
+            'plop', 'celebrate',
+        ].forEach(key => {
+            if (!this.cache.audio.exists(key)) this.load.audio(key, `assets/audio/${key}.mp3`);
+        });
+    }
+
     create() {
         const W = this.scale.width;
         const H = this.scale.height;

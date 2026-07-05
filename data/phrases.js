@@ -31,6 +31,9 @@ const PHRASES = {
     tidyOops:      ['tidy_oops_1', 'tidy_oops_2'],        // ~40% on a floor drop
     allTidy:       ['all_tidy_1', 'all_tidy_2'],          // last toy in, celebration
 
+    // ── Little Driver (car) mini-game ────────────────────────────────────────
+    driveChosen:   ['drive_chosen_1', 'drive_chosen_2'],  // tapped the car tile (silent until recorded)
+
     chosen:     ['chosen', 'chosen_2', 'chosen_3'],
     _chosenIdx: 0,
     nextChosen() {
