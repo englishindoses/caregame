@@ -414,8 +414,8 @@ class CarScene extends Phaser.Scene {
         const y = cy - R * 0.12;                    // just above the hub, flanking the wheel
         this._stalkTilt = Phaser.Math.DegToRad(17);
         this._stalkLen  = R * 0.46;                 // short enough to stay on-screen in the margin
-        this._wiperStalk = this.makeStalk(cx - (R + 12), y, -1, 'wiper', '💧');   // left of the rim
-        this._indStalk   = this.makeStalk(cx + (R + 12), y, +1, 'indicator', '⇅'); // right of the rim
+        this._wiperStalk = this.makeStalk(cx - (R - 4), y, -1, 'wiper', '💧');   // left, inner end just behind the rim
+        this._indStalk   = this.makeStalk(cx + (R - 4), y, +1, 'indicator', '⇅'); // right, inner end just behind the rim
 
         // One shared drag for whichever stalk was grabbed.
         this.input.on('pointermove', p => {
@@ -436,7 +436,7 @@ class CarScene extends Phaser.Scene {
     }
 
     makeStalk(pivotX, pivotY, outSign, kind, glyph) {
-        const len = this._stalkLen, thick = 22;
+        const len = this._stalkLen, thick = 44;   // doubled for chunkier, easier-to-grab toggles
         const c = this.add.container(pivotX, pivotY).setDepth(11);
         const g = this.add.graphics();
         g.fillStyle(0x2a2d36, 1);
