@@ -45,10 +45,12 @@ class CarScene extends Phaser.Scene {
         this.W = W;
         this.H = H;
 
-        // Key vertical bands (portrait). dashTop is where the road view meets
-        // the top of the dashboard image (which occupies the bottom ~38%).
+        // Key vertical bands (portrait). The dashboard image occupies the bottom
+        // ~38% (its top ~half is a transparent windscreen arch). dashTop is where
+        // the road view converges — aligned with the top of the instrument panel
+        // (the bottom of the windscreen hole) so the road fills the hole.
         this.horizon = H * 0.30;
-        this.dashTop = H * 0.62;
+        this.dashTop = H * 0.80;
 
         this.layers   = [];      // parallax scenery {g, factor}
         this._steer   = null;    // active wheel-drag state
@@ -269,11 +271,11 @@ class CarScene extends Phaser.Scene {
 
     buildWheel() {
         const { W, H } = this;
-        const R = W * 0.48;    // sized to the (narrow) portrait width
+        const R = W * 0.30;    // centered on the dashboard, leaving side margins for the stalks
         this._wheelR   = R;
         this._wheelMax = Phaser.Math.DegToRad(CAR_CONFIG.WHEEL_MAX_DEG);
         const cx = W / 2;
-        const cy = H * 0.92;   // hub sits low on the dashboard; the bottom of the wheel runs off-screen
+        const cy = H * 0.84;   // hub rests on the instrument panel; the wheel top rises into the windscreen
         this._wheelCx = cx;
         this._wheelCy = cy;
 
@@ -409,11 +411,11 @@ class CarScene extends Phaser.Scene {
 
     buildStalks() {
         const cx = this._wheelCx, cy = this._wheelCy, R = this._wheelR;
-        const y = cy - R * 0.50 + 25;
+        const y = cy - R * 0.12;                    // just above the hub, flanking the wheel
         this._stalkTilt = Phaser.Math.DegToRad(17);
-        this._stalkLen  = R * 0.66;
-        this._wiperStalk = this.makeStalk(cx - R * 0.78, y, -1, 'wiper', '💧');
-        this._indStalk   = this.makeStalk(cx + R * 0.78, y, +1, 'indicator', '⇅');
+        this._stalkLen  = R * 0.46;                 // short enough to stay on-screen in the margin
+        this._wiperStalk = this.makeStalk(cx - (R + 12), y, -1, 'wiper', '💧');   // left of the rim
+        this._indStalk   = this.makeStalk(cx + (R + 12), y, +1, 'indicator', '⇅'); // right of the rim
 
         // One shared drag for whichever stalk was grabbed.
         this.input.on('pointermove', p => {
