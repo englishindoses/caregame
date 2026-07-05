@@ -57,16 +57,17 @@ class CarScene extends Phaser.Scene {
         this.layers   = [];      // parallax scenery {g, factor}
         this._steer   = null;    // active wheel-drag state
         this._wiping  = false;
-        this._indicator    = null;   // null | 'left' | 'right'
-        this._indActiveBtn = null;
+        this._activeStalk   = null;  // stalk currently being dragged
+        this._indicator     = null;  // null | 'left' | 'right'
+        this._indActiveTell = null;  // the lit dashboard tell-tale arrow
         this._indTick = this._indTimeout = this._indGlow = null;
 
         this.buildScenery();
         this.buildWipers();
         this.buildDashboard();
-        this.buildWheel();
-        this.buildIndicators();
-        this.buildWiperButton();
+        this.buildWheel();             // sets _wheelCx/Cy/R used by the two below
+        this.buildIndicatorLights();   // green tell-tales on the dash, behind the wheel
+        this.buildStalks();            // wiper stalk (left) + indicator stalk (right)
         this.buildExitButton();
         this.buildRotatePrompt();
 
@@ -103,13 +104,10 @@ class CarScene extends Phaser.Scene {
         const grass = this.add.graphics().setDepth(3);
         grass.fillStyle(0x86c25e, 1);
         grass.fillRect(-160, horizon, W + 320, dashTop - horizon + 4);
-        // A couple of roadside bushes for the nearest parallax layer.
-        grass.fillStyle(0x5f9e46, 1);
-        grass.fillCircle(W * 0.08, dashTop - 20, 60);
-        grass.fillCircle(W * 0.93, dashTop - 30, 72);
         this.layers.push({ g: grass, factor: 0.9 });
 
-        // Road (trapezoid) + centre dashes.
+        // Road (static trapezoid). The dashed line + roadside bushes are drawn on
+        // top in update() and scroll toward the viewer.
         const road = this.add.graphics().setDepth(4);
         road.fillStyle(0x555560, 1);
         road.fillPoints([
@@ -118,15 +116,55 @@ class CarScene extends Phaser.Scene {
             new Phaser.Geom.Point(W * 0.90, dashTop),
             new Phaser.Geom.Point(W * 0.10, dashTop),
         ], true);
-        road.fillStyle(0xf2e4c4, 1);
-        for (let i = 0; i <= 4; i++) {
-            const t = i / 4;
-            const y = Phaser.Math.Linear(horizon + 12, dashTop - 12, t);
-            const w = Phaser.Math.Linear(4, 22, t);
-            const h = Phaser.Math.Linear(8, 40, t);
-            road.fillRect(W / 2 - w / 2, y - h / 2, w, h);
-        }
         this.layers.push({ g: road, factor: 1.0 });
+
+        // Scrolling layer: centre dashes + roadside bushes stream from the horizon
+        // toward the viewer (redrawn each frame in update()) so the world moves.
+        this.roadFx = this.add.graphics().setDepth(5);
+        this.layers.push({ g: this.roadFx, factor: 1.0 });
+        this._scrollSpeed = 0.5;                 // t-units/sec (0 = horizon, 1 = nearest)
+        this._dashes = [];
+        for (let i = 0; i < 7; i++) this._dashes.push({ t: i / 7 });
+        this._bushes = [];
+        for (let i = 0; i < 6; i++) {
+            this._bushes.push({ t: i / 6, side: i % 2 ? 1 : -1, r: Phaser.Math.Between(16, 30) });
+        }
+    }
+
+    // Project a point on the road: t (0 horizon → 1 nearest), laneFrac (0 centre,
+    // ±1 road edge, beyond for the verge). Returns screen x/y + a perspective scale.
+    roadProject(t, laneFrac) {
+        const y    = Phaser.Math.Linear(this.horizon, this.dashTop, t);
+        const half = Phaser.Math.Linear(30, this.W * 0.40, t);
+        return { x: this.W / 2 + laneFrac * half, y, scale: Phaser.Math.Linear(0.12, 1, t) };
+    }
+
+    update(time, delta) {
+        if (!this.roadFx) return;
+        const dt = Math.min(delta / 1000, 0.05);   // clamp so a background tab doesn't jump
+        const g = this.roadFx;
+        g.clear();
+
+        // Roadside bushes first, so the dashes sit in front of them.
+        this._bushes.forEach(b => {
+            b.t += this._scrollSpeed * 0.85 * dt;
+            if (b.t > 1) { b.t -= 1; b.r = Phaser.Math.Between(16, 30); }
+            const p  = this.roadProject(b.t, b.side * 1.35);
+            const rr = b.r * p.scale;
+            g.fillStyle(0x5f9e46, 1); g.fillCircle(p.x, p.y, rr);
+            g.fillStyle(0x4f8a3a, 1); g.fillCircle(p.x, p.y - rr * 0.3, rr * 0.7);
+        });
+
+        // Centre dashes.
+        g.fillStyle(0xf2e4c4, 1);
+        this._dashes.forEach(d => {
+            d.t += this._scrollSpeed * dt;
+            if (d.t > 1) d.t -= 1;
+            const p = this.roadProject(d.t, 0);
+            const w = Phaser.Math.Linear(3, 22, d.t);
+            const h = Phaser.Math.Linear(6, 46, d.t);
+            g.fillRect(p.x - w / 2, p.y - h / 2, w, h);
+        });
     }
 
     updateParallax() {
@@ -141,13 +179,15 @@ class CarScene extends Phaser.Scene {
     buildWipers() {
         const { W, dashTop } = this;
         const len = dashTop * 0.82;
-        this._wiperRest  = Phaser.Math.DegToRad(22);    // leaning right at rest
-        this._wiperSwept = Phaser.Math.DegToRad(-74);   // leaning left, swept
+        // Parked position is DOWN (blades near-horizontal along the base of the
+        // windscreen); a sweep lifts them up and back down.
+        this._wiperDown = Phaser.Math.DegToRad(79);    // parked low, tips just peeking into the glass
+        this._wiperUp   = Phaser.Math.DegToRad(-22);   // top of the sweep, near vertical
 
         const blade = (px) => {
             const r = this.add.rectangle(px, dashTop, 9, len, 0x20242c)
                 .setOrigin(0.5, 1).setDepth(8);
-            r.rotation = this._wiperRest;
+            r.rotation = this._wiperDown;
             return r;
         };
         this._wipers = [blade(W * 0.42), blade(W * 0.58)];
@@ -168,11 +208,11 @@ class CarScene extends Phaser.Scene {
             onYoyo:   () => this.playSwish(),
             onRepeat: () => this.playSwish(),
             onUpdate: () => {
-                const a = Phaser.Math.Linear(this._wiperRest, this._wiperSwept, t.v);
+                const a = Phaser.Math.Linear(this._wiperDown, this._wiperUp, t.v);
                 this._wipers.forEach(b => { b.rotation = a; });
             },
             onComplete: () => {
-                this._wipers.forEach(b => { b.rotation = this._wiperRest; });
+                this._wipers.forEach(b => { b.rotation = this._wiperDown; });
                 this._wiping = false;
             },
         });
@@ -236,9 +276,10 @@ class CarScene extends Phaser.Scene {
             });
         }
 
-        // Horn nested in the wheel's hub.
+        // Horn nested in the wheel's hub, raised a little so it sits higher on it.
         const hornR = R * 0.24;
-        const horn = this.add.circle(0, 0, hornR, 0xd94b4b).setStrokeStyle(6, 0xa83232);
+        const hornY = -R * 0.10;
+        const horn = this.add.circle(0, hornY, hornR, 0xd94b4b).setStrokeStyle(6, 0xa83232);
         horn.setInteractive({ useHandCursor: true });
         horn.on('pointerdown', (p, lx, ly, ev) => {
             if (ev && ev.stopPropagation) ev.stopPropagation();
@@ -247,7 +288,7 @@ class CarScene extends Phaser.Scene {
                 targets: horn, scale: 1.18, duration: 90, yoyo: true, ease: 'Quad.easeOut',
             });
         });
-        const hornIcon = this.add.text(0, 0, '🔊', { fontSize: `${hornR}px` }).setOrigin(0.5);
+        const hornIcon = this.add.text(0, hornY, '🔊', { fontSize: `${hornR}px` }).setOrigin(0.5);
 
         c.add([wheelVisual, horn, hornIcon]);
         this.wheel = c;
@@ -284,69 +325,133 @@ class CarScene extends Phaser.Scene {
         return Math.atan2(pointer.y - this._wheelCy, pointer.x - this._wheelCx);
     }
 
-    // ── Indicators ───────────────────────────────────────────────────────────
+    // ── Indicator tell-tale lights (green arrows on the dash, behind the wheel) ─
 
-    buildIndicators() {
-        const { W, H } = this;
-        const y = H * 0.72;
-        this._indLeft  = this.makeIndicator(W * 0.11, y, 'left');
-        this._indRight = this.makeIndicator(W * 0.89, y, 'right');
+    buildIndicatorLights() {
+        const cx = this._wheelCx, cy = this._wheelCy, R = this._wheelR;
+        const y  = cy - R * 0.55;      // up in the open area behind the wheel spokes
+        const dx = R * 0.30;
+        this._tellLeft  = this.makeTell(cx - dx, y, '◀');
+        this._tellRight = this.makeTell(cx + dx, y, '▶');
     }
 
-    makeIndicator(x, y, side) {
-        const bw = 96, bh = 96;
-        const g = this.add.graphics().setDepth(12);
-        g.fillStyle(0x1b1b26, 1);
-        g.fillRoundedRect(x - bw / 2, y - bh / 2, bw, bh, 18);
-        const arrow = this.add.text(x, y, side === 'left' ? '◀' : '▶', {
-            fontFamily: 'Arial, sans-serif', fontSize: '52px', color: '#3a7d2c',
-        }).setOrigin(0.5).setDepth(13);
-        const zone = this.add.zone(x, y, bw, bh).setDepth(14).setInteractive({ useHandCursor: true });
-        zone.on('pointerdown', () => this.setIndicator(side));
-        return { arrow, on: false };
+    makeTell(x, y, glyph) {
+        // Dim when off; the matching one lights bright green + flashes while its
+        // indicator is on. Depth 11 = behind the wheel (12), in front of the dash.
+        return this.add.text(x, y, glyph, {
+            fontFamily: 'Arial, sans-serif', fontSize: '46px', color: '#2f6b28',
+        }).setOrigin(0.5).setAlpha(0.22).setDepth(11);
     }
 
+    // side: 'left' | 'right'. Driven by the indicator stalk (up = right, down = left).
     setIndicator(side) {
-        const btn = side === 'left' ? this._indLeft : this._indRight;
-        if (this._indicator === side) { this.stopIndicator(); return; }   // tap again = off
+        if (this._indicator === side) { this.stopIndicator(); return; }  // same way again = off
         this.stopIndicator();
         this._indicator = side;
-        this._indActiveBtn = btn;
+        const tell = side === 'left' ? this._tellLeft : this._tellRight;
+        this._indActiveTell = tell;
+        tell.setColor('#37e04a');
         this._indGlow = this.tweens.add({
-            targets: btn.arrow, alpha: { from: 1, to: 0.15 },
+            targets: tell, alpha: { from: 1, to: 0.2 },
             duration: CAR_CONFIG.INDICATOR_TICK_MS / 2, yoyo: true, repeat: -1,
         });
-        btn.arrow.setColor('#37e04a');
         this.playTick();
         this._indTick = this.time.addEvent({
             delay: CAR_CONFIG.INDICATOR_TICK_MS, loop: true, callback: () => this.playTick(),
         });
         this._indTimeout = this.time.delayedCall(CAR_CONFIG.INDICATOR_TIMEOUT_MS,
             () => this.stopIndicator());
+        this.syncIndicatorStalk();
     }
 
     stopIndicator() {
         if (this._indTick)    { this._indTick.remove();    this._indTick = null; }
         if (this._indTimeout) { this._indTimeout.remove(); this._indTimeout = null; }
         if (this._indGlow)    { this._indGlow.stop();      this._indGlow = null; }
-        if (this._indActiveBtn) {
-            this._indActiveBtn.arrow.setAlpha(1).setColor('#3a7d2c');
-            this._indActiveBtn = null;
+        if (this._indActiveTell) {
+            this._indActiveTell.setAlpha(0.22).setColor('#2f6b28');
+            this._indActiveTell = null;
         }
         this._indicator = null;
+        this.syncIndicatorStalk();
     }
 
-    // ── Wiper button ─────────────────────────────────────────────────────────
+    // ── Stalks (drag / flick up or down) ─────────────────────────────────────
+    // Left stalk = wipers (push either way to sweep, springs back). Right stalk =
+    // indicators (push up = right, down = left; stays until it turns off).
 
-    buildWiperButton() {
-        const { W, H } = this;
-        const x = W * 0.30, y = H * 0.90, s = 78;
-        const g = this.add.graphics().setDepth(12);
-        g.fillStyle(0x1b1b26, 1);
-        g.fillRoundedRect(x - s / 2, y - s / 2, s, s, 16);
-        this.add.text(x, y, '🌧', { fontSize: '40px' }).setOrigin(0.5).setDepth(13);
-        this.add.zone(x, y, s, s).setDepth(14).setInteractive({ useHandCursor: true })
-            .on('pointerdown', () => this.startWipers());
+    buildStalks() {
+        const cx = this._wheelCx, cy = this._wheelCy, R = this._wheelR;
+        const y = cy - R * 0.50;
+        this._stalkTilt = Phaser.Math.DegToRad(17);
+        this._stalkLen  = R * 0.66;
+        this._wiperStalk = this.makeStalk(cx - R * 0.78, y, -1, 'wiper', '💧');
+        this._indStalk   = this.makeStalk(cx + R * 0.78, y, +1, 'indicator', '⇅');
+
+        // One shared drag for whichever stalk was grabbed.
+        this.input.on('pointermove', p => {
+            if (!this._activeStalk) return;
+            const s  = this._activeStalk;
+            const up = Phaser.Math.Clamp(-(p.y - s.startY) / 70, -1, 1);   // +1 up, -1 down
+            s.c.rotation = -s.outSign * up * this._stalkTilt;
+        });
+        this.input.on('pointerup', p => {
+            if (!this._activeStalk) return;
+            const s = this._activeStalk; this._activeStalk = null;
+            const dy = p.y - s.startY, TH = 22;
+            if      (dy < -TH) this.stalkAction(s, 'up');
+            else if (dy >  TH) this.stalkAction(s, 'down');
+            else               this.settleStalk(s);
+        });
+    }
+
+    makeStalk(pivotX, pivotY, outSign, kind, glyph) {
+        const len = this._stalkLen, thick = 22;
+        const c = this.add.container(pivotX, pivotY).setDepth(11);
+        const g = this.add.graphics();
+        g.fillStyle(0x2a2d36, 1);
+        g.fillRoundedRect(Math.min(0, outSign * len), -thick / 2, len, thick, thick / 2);
+        const knob = this.add.circle(outSign * len, 0, thick * 0.95, 0x3a3f4a)
+            .setStrokeStyle(3, 0x20242c);
+        const icon = this.add.text(outSign * len, 0, glyph, { fontSize: `${Math.round(thick)}px` })
+            .setOrigin(0.5);
+        c.add([g, knob, icon]);
+
+        const stalk = { c, outSign, kind, startY: 0 };
+
+        // Hit zone over the visible OUTER part of the stalk, kept clear of the
+        // wheel so it never steals a steering drag. Tall for the up/down flick.
+        const zx = pivotX + outSign * len * 0.65;
+        this.add.zone(zx, pivotY, len * 0.95, 150).setDepth(15)
+            .setInteractive({ useHandCursor: true })
+            .on('pointerdown', p => { this._activeStalk = stalk; stalk.startY = p.y; });
+        return stalk;
+    }
+
+    // Rest/held rotation for a stalk given the current state.
+    stalkRestRotation(s) {
+        if (s.kind === 'wiper') return 0;
+        if (this._indicator === 'right') return -s.outSign * this._stalkTilt;  // up
+        if (this._indicator === 'left')  return  s.outSign * this._stalkTilt;  // down
+        return 0;
+    }
+
+    settleStalk(s) {
+        this.tweens.add({ targets: s.c, rotation: this.stalkRestRotation(s),
+            duration: 200, ease: 'Back.easeOut' });
+    }
+
+    syncIndicatorStalk() {
+        if (this._indStalk) this.settleStalk(this._indStalk);
+    }
+
+    stalkAction(s, dir) {
+        if (s.kind === 'wiper') {
+            this.startWipers();
+            this.settleStalk(s);                                 // momentary — springs back
+        } else {
+            this.setIndicator(dir === 'up' ? 'right' : 'left');  // setIndicator settles the stalk
+        }
     }
 
     // ── Exit menu (door button → menu of destinations) ───────────────────────
@@ -476,8 +581,26 @@ class CarScene extends Phaser.Scene {
             this._hornSnd.play();
             return;
         }
-        this._tone(392, 0.28, 'square', 0.18);
-        this._tone(262, 0.28, 'square', 0.16);
+        // Sustained two-tone "beeeep": quick attack, hold, then release — longer
+        // and more horn-like than a short blip. Cut off any prior beep first.
+        const ctx = this._ctx();
+        if (!ctx) return;
+        if (this._hornOscs) this._hornOscs.forEach(o => { try { o.stop(); } catch (e) {} });
+        const now = ctx.currentTime, dur = 0.6;
+        this._hornOscs = [];
+        [392, 262].forEach((f, i) => {
+            const o = ctx.createOscillator(), g = ctx.createGain();
+            o.type = 'square';
+            o.frequency.setValueAtTime(f, now);
+            const peak = i ? 0.14 : 0.16;
+            g.gain.setValueAtTime(0.0001, now);
+            g.gain.exponentialRampToValueAtTime(peak, now + 0.02);   // quick attack
+            g.gain.setValueAtTime(peak, now + dur - 0.1);            // hold
+            g.gain.exponentialRampToValueAtTime(0.0001, now + dur);  // release
+            o.connect(g); g.connect(ctx.destination);
+            o.start(now); o.stop(now + dur + 0.02);
+            this._hornOscs.push(o);
+        });
     }
 
     playSwish() {
