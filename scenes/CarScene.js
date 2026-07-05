@@ -2,9 +2,9 @@
 // the driver's seat: windscreen on top, dashboard + steering wheel below. No
 // fail states, no scoring — the child steers, honks, wipes and indicates.
 //
-// This is the only LANDSCAPE scene: on entry it flips the game to 1280×720 and
-// tries to lock orientation; on exit it restores the portrait size. A rotate
-// prompt covers the screen while the phone is held portrait.
+// Portrait 720×1280 like every other scene: the dashboard art sits full-width
+// along the bottom (its transparent windscreen hole shows the code-drawn road),
+// and the scenery fills the space above. No orientation flip / rotate prompt.
 //
 // Audio is fire-and-forget and NEVER locks input (a deliberate departure from
 // the main game — everything must stay interactive at once). Where a recorded
@@ -37,22 +37,18 @@ class CarScene extends Phaser.Scene {
     }
 
     create() {
-        // ── Go landscape for this scene only ─────────────────────────────────
-        this.scale.setGameSize(1280, 720);
-        try {
-            if (screen.orientation && screen.orientation.lock) {
-                screen.orientation.lock('landscape').catch(() => {});
-            }
-        } catch (e) { /* iOS Safari: no lock — the rotate prompt covers this */ }
-
+        // Portrait, like every other scene — no orientation flip, no rotate
+        // prompt. The dashboard art sits full-width along the bottom and the
+        // road shows through its windscreen hole; scenery fills the top.
         const W = this.scale.width;
         const H = this.scale.height;
         this.W = W;
         this.H = H;
 
-        // Key vertical bands.
-        this.horizon = H * 0.32;
-        this.dashTop = H * 0.56;
+        // Key vertical bands (portrait). dashTop is where the road view meets
+        // the top of the dashboard image (which occupies the bottom ~38%).
+        this.horizon = H * 0.30;
+        this.dashTop = H * 0.62;
 
         this.layers   = [];      // parallax scenery {g, factor}
         this._steer   = null;    // active wheel-drag state
@@ -69,7 +65,6 @@ class CarScene extends Phaser.Scene {
         this.buildIndicatorLights();   // green tell-tales on the dash, behind the wheel
         this.buildStalks();            // wiper stalk (left) + indicator stalk (right)
         this.buildExitButton();
-        this.buildRotatePrompt();
 
         // Soft engine hum if the clip exists (no synth fallback — silence is fine).
         if (this.cache.audio.exists('engine_hum')) {
@@ -208,8 +203,8 @@ class CarScene extends Phaser.Scene {
     // ── Wipers (code-drawn, no image) ────────────────────────────────────────
 
     buildWipers() {
-        const { W, dashTop } = this;
-        const len = dashTop * 0.82;
+        const { W, horizon, dashTop } = this;
+        const len = (dashTop - horizon) * 0.95;   // sweep the windscreen, not the whole screen
         // Parked position is DOWN (blades near-horizontal along the base of the
         // windscreen); a sweep lifts them up and back down.
         this._wiperDown = Phaser.Math.DegToRad(79);    // parked low, tips just peeking into the glass
@@ -254,9 +249,10 @@ class CarScene extends Phaser.Scene {
     buildDashboard() {
         const { W, H, dashTop } = this;
         if (this.textures.exists('car_dashboard')) {
-            // Full-bleed frame anchored to the top so its transparent windscreen
-            // opening lines up with the road view drawn behind it.
-            const img = this.add.image(W / 2, 0, 'car_dashboard').setOrigin(0.5, 0).setDepth(10);
+            // Full-width frame anchored to the BOTTOM. The road/scenery is drawn
+            // behind it (lower depth) and shows through the transparent
+            // windscreen arch, blending into the open scenery above the frame.
+            const img = this.add.image(W / 2, H, 'car_dashboard').setOrigin(0.5, 1).setDepth(10);
             img.setScale(W / img.width);
             return;
         }
@@ -273,11 +269,11 @@ class CarScene extends Phaser.Scene {
 
     buildWheel() {
         const { W, H } = this;
-        const R = H * 0.34;
+        const R = W * 0.48;    // sized to the (narrow) portrait width
         this._wheelR   = R;
         this._wheelMax = Phaser.Math.DegToRad(CAR_CONFIG.WHEEL_MAX_DEG);
         const cx = W / 2;
-        const cy = H * 0.78;   // hub sits on the dashboard; the bottom of the wheel runs off-screen
+        const cy = H * 0.92;   // hub sits low on the dashboard; the bottom of the wheel runs off-screen
         this._wheelCx = cx;
         this._wheelCy = cy;
 
@@ -558,31 +554,6 @@ class CarScene extends Phaser.Scene {
         this.scene.start(sceneKey, Object.assign({ characterId: this.characterId }, extra || {}));
     }
 
-    // ── Rotate prompt (shown while held portrait) ────────────────────────────
-
-    buildRotatePrompt() {
-        const { W, H } = this;
-        const c = this.add.container(0, 0).setDepth(200).setVisible(false);
-        const bg = this.add.rectangle(W / 2, H / 2, W, H, 0x1b2a33, 0.97).setInteractive();
-        const txt = this.add.text(W / 2, H / 2, '↻\n\nTurn your phone sideways', {
-            fontFamily: 'Quicksand, Arial, sans-serif', fontSize: '54px',
-            color: '#ffffff', align: 'center', lineSpacing: 10,
-        }).setOrigin(0.5);
-        c.add([bg, txt]);
-        this._rotatePrompt = c;
-
-        this._onResize = () => this.updateOrientation();
-        window.addEventListener('resize', this._onResize);
-        window.addEventListener('orientationchange', this._onResize);
-        this.updateOrientation();
-    }
-
-    updateOrientation() {
-        if (!this._rotatePrompt) return;
-        const portrait = window.innerHeight > window.innerWidth;
-        this._rotatePrompt.setVisible(portrait);
-    }
-
     // ── Audio (fire-and-forget; synth fallbacks; never locks input) ──────────
 
     _ctx() {
@@ -648,20 +619,11 @@ class CarScene extends Phaser.Scene {
         this._tone(1500, 0.035, 'square', 0.12);
     }
 
-    // ── Teardown: restore portrait, unlock orientation, stop loops ───────────
+    // ── Teardown: stop loops/sounds ──────────────────────────────────────────
 
     teardown() {
         this.stopIndicator();
         if (this._engine) { this._engine.stop(); this._engine.destroy(); this._engine = null; }
         if (this._hornSnd) { this._hornSnd.stop(); this._hornSnd = null; }
-        if (this._onResize) {
-            window.removeEventListener('resize', this._onResize);
-            window.removeEventListener('orientationchange', this._onResize);
-            this._onResize = null;
-        }
-        try {
-            if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
-        } catch (e) { /* ignore */ }
-        this.scale.setGameSize(720, 1280);
     }
 }
