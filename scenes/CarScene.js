@@ -612,7 +612,33 @@ class CarScene extends Phaser.Scene {
     playSwish() {
         if (this.sound.mute) return;
         if (this.cache.audio.exists('wiper_swish')) { this.sound.play('wiper_swish', { volume: 0.5 }); return; }
-        this._tone(760, 0.22, 'sine', 0.07, 220);
+        this._swish();
+    }
+
+    // Synth "swish": a short band-pass-filtered white-noise burst that swells
+    // then fades, with the filter sweeping up-then-down like the blade
+    // travelling across the glass — reads as an airy "swish" rather than a tone.
+    _swish() {
+        const ctx = this._ctx();
+        if (!ctx) return;
+        const now = ctx.currentTime, dur = 0.3;
+        const buf  = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * dur), ctx.sampleRate);
+        const data = buf.getChannelData(0);
+        for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;   // white noise
+        const src = ctx.createBufferSource();
+        src.buffer = buf;
+        const bp = ctx.createBiquadFilter();
+        bp.type = 'bandpass';
+        bp.Q.value = 0.8;                                              // broad = airy whoosh
+        bp.frequency.setValueAtTime(500, now);
+        bp.frequency.linearRampToValueAtTime(1700, now + dur * 0.5);   // sweep up...
+        bp.frequency.linearRampToValueAtTime(600, now + dur);          // ...then back down
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0.0001, now);
+        g.gain.linearRampToValueAtTime(0.14, now + dur * 0.35);        // quick swell
+        g.gain.exponentialRampToValueAtTime(0.0001, now + dur);        // fade
+        src.connect(bp); bp.connect(g); g.connect(ctx.destination);
+        src.start(now); src.stop(now + dur);
     }
 
     playTick() {
