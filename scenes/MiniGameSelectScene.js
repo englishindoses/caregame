@@ -136,7 +136,8 @@ class MiniGameSelectScene extends Phaser.Scene {
             fontFamily: 'Quicksand, Arial, sans-serif', fontSize: `${this.W * 0.060}px`,
             color: '#ffffff', stroke: '#5a3a2a', strokeThickness: 5,
         }).setOrigin(0.5).setDepth(7);
-        target.setInteractive({ useHandCursor: true });
+        const hit = this.add.zone(x, y + TILE * 0.16, this.W * 0.44, TILE * 1.55)
+            .setDepth(8).setInteractive({ useHandCursor: true });
 
         // Gentle idle pulse so the tile invites a tap.
         this.tweens.add({
@@ -148,7 +149,7 @@ class MiniGameSelectScene extends Phaser.Scene {
             ease:     'Sine.easeInOut',
         });
 
-        target.on('pointerdown', () => {
+        hit.on('pointerdown', () => {
             if (this._inputLocked || this._launching || this._navigationOpen) return;
             this._launching = true;
             this.tweens.killTweensOf(target);

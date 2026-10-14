@@ -38,7 +38,6 @@ function addDoorButton(scene) {
         backdrop.on('pointerdown', closeMenu);
         const choices = [
             { label: 'Back to Care Game', scene: 'PlayScene' },
-            { label: 'Back to Games Menu', scene: 'AllGamesScene' },
             { label: 'Back to Home', scene: 'SelectScene' },
         ].filter(choice => choice.scene !== scene.sys.settings.key);
         const panelW = W * 0.88;

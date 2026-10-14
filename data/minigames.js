@@ -4,6 +4,12 @@
 // a data edit plus the scene file. Catch, Tidy, Drive and Memory are wired.
 const MINIGAMES = [
     {
+        id: 'memory', name: 'Memory', image: 'memory_tile',
+        chosenGroup: 'memoryChosen', chosenText: "Let's play memory!",
+        scene: 'MemoryScene', mode: 'mini',
+    },
+
+    {
         id:          'catch',
         name:        'Catch',
         image:       'item_ball',
@@ -26,11 +32,6 @@ const MINIGAMES = [
         tileScale:   1.1,
         chosenGroup: 'driveChosen', // silent until drive_chosen_* are recorded
         scene:       'CarScene',
-    },
-    {
-        id: 'memory', name: 'Memory', image: 'memory_tile',
-        chosenGroup: 'memoryChosen', chosenText: "Let's play memory!",
-        scene: 'MemoryScene', mode: 'mini',
     },
     // Future games are added here one at a time.
 ];

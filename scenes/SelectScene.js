@@ -1,120 +1,76 @@
+// Home is the activity hub; choosing a plushie does not start an activity.
 class SelectScene extends Phaser.Scene {
-    constructor() {
-        super('SelectScene');
+    constructor() { super('SelectScene'); }
+
+    init(data) {
+        this.characterId = data.characterId || localStorage.getItem('tcm_character') || 'dolly';
+        this._settingsOpen = false;
     }
 
     preload() {
-        if (!this.textures.exists('all_games_icon')) {
-            this.load.image('all_games_icon', 'assets/images/all_games_icon.webp');
-        }
+        if (!this.textures.exists('toy_box_closed')) this.load.image('toy_box_closed', 'assets/images/toy_box_closed.png');
     }
 
     create() {
-        addMuteButton(this);
-        this.input.enabled = true;
-        this._openingGames = false;
-        const W = this.scale.width;
-        const H = this.scale.height;
-
-        if (this.textures.exists('bg_room')) {
-            this.add.image(W / 2, H / 2, 'bg_room').setDisplaySize(W, H);
-        } else {
-            this.add.rectangle(W / 2, H / 2, W, H, 0xF2E4D4);
-        }
-
-        this.add.text(W / 2, H * 0.10, 'Who would you like\nto look after?', {
-            fontFamily: 'Arial, sans-serif',
-            fontSize:   '52px',
-            color:      '#5A3A2A',
-            align:      'center',
-            stroke:     '#ffffff',
-            strokeThickness: 4,
+        const W = this.scale.width, H = this.scale.height;
+        this._launching = false;
+        this.add.image(W / 2, H / 2, 'bg_room').setDisplaySize(W, H);
+        addMuteButton(this, { x: 50, y: H * 0.055 });
+        addParentSettings(this);
+        this.add.text(W / 2, H * 0.055, 'Home', {
+            fontFamily: 'Quicksand, Arial', fontSize: `${W * 0.075}px`, color: '#ffffff', stroke: '#5a3a2a', strokeThickness: 5,
         }).setOrigin(0.5);
-
-        const CHAR_SIZE = Math.min(W * 0.42, H * 0.26);
-        const positions = [
-            { x: W * 0.25, y: H * 0.36 },
-            { x: W * 0.75, y: H * 0.36 },
-            { x: W * 0.5,  y: H * 0.68 },
-        ];
-
+        makeMemoryTileTexture(this);
+        const launch = (destination, mode) => {
+            if (this._launching || this._settingsOpen) return;
+            this._launching = true;
+            this.scene.start(destination, { characterId: this.characterId, mode, fromSelect: destination === 'PlayScene' });
+        };
+        const care = this.add.rectangle(W / 2, H * 0.19, W * 0.84, H * 0.12, 0xF0F4E6).setStrokeStyle(4, 0xC1D0A8);
+        this.carePicture = this.add.image(W * 0.23, H * 0.19, `${this.characterId}_happy`);
+        this.resizeCarePicture();
+        this.add.text(W * 0.57, H * 0.19, 'Care', { fontFamily: 'Quicksand, Arial', fontSize: `${W * 0.075}px`, color: '#5a4938' }).setOrigin(0.5);
+        this.add.zone(care.x, care.y, care.width, care.height).setInteractive({ useHandCursor: true }).on('pointerdown', () => launch('PlayScene'));
+        ALL_GAMES.forEach((game, i) => {
+            const x = W * (i % 2 ? 0.75 : 0.25), y = H * (0.40 + Math.floor(i / 2) * 0.25);
+            const size = Math.min(W * 0.30, H * 0.17);
+            const tile = this.add.image(x, y, game.image);
+            tile.setScale(size / Math.max(tile.width, tile.height));
+            const base = tile.scaleX;
+            this.tweens.add({ targets: tile, scale: base * 1.04, duration: 1500, yoyo: true, repeat: -1 });
+            this.add.text(x, y + size * 0.70, game.name, {
+                fontFamily: 'Quicksand, Arial', fontSize: `${W * 0.054}px`, color: '#ffffff', stroke: '#5a3a2a', strokeThickness: 5,
+            }).setOrigin(0.5);
+            // The picture, label and intervening space all respond to a tap.
+            this.add.zone(x, y + size * 0.17, W * 0.44, size * 1.55).setInteractive({ useHandCursor: true }).on('pointerdown', () => launch(game.scene, 'full'));
+        });
+        this.plushieLabel = this.add.text(W / 2, H * 0.83, '', { fontFamily: 'Quicksand, Arial', fontSize: `${W * 0.048}px`, color: '#5a4938', stroke: '#fff8ec', strokeThickness: 3 }).setOrigin(0.5);
+        this.selectionRings = [];
         CHARACTERS.forEach((char, i) => {
-            const { x, y: charY } = positions[i];
-
-            let sprite;
-            if (this.textures.exists(char.neutral)) {
-                sprite = this.add.image(x, charY, char.neutral);
-                const scale = CHAR_SIZE / Math.max(sprite.width, sprite.height);
-                sprite.setScale(scale);
-            } else {
-                sprite = this.add.circle(x, charY, CHAR_SIZE / 2, char.color);
-            }
-
-            sprite.setInteractive({ useHandCursor: true });
-
-            this.tweens.add({
-                targets:  sprite,
-                y:        charY - 15,
-                duration: 900,
-                yoyo:     true,
-                repeat:   -1,
-                ease:     'Sine.easeInOut',
-                delay:    i * 250,
-            });
-
-            sprite.on('pointerdown', () => this.choose(sprite, char));
-        });
-        this.buildAllGamesButton(W, H);
-    }
-
-    buildAllGamesButton(W, H) {
-        const bx = W / 2, by = H * 0.89, bw = W * 0.86, bh = H * 0.155;
-        const radius = bh * 0.25;
-        const button = this.add.container(bx, by);
-        const panel = this.add.graphics();
-        panel.fillStyle(0x6B4D36, 0.17).fillRoundedRect(-bw / 2 + 4, -bh / 2 + 15, bw, bh, radius);
-        panel.fillStyle(0x9DAF86).fillRoundedRect(-bw / 2, -bh / 2 + 8, bw, bh, radius);
-        panel.fillStyle(0xF0F4E6).fillRoundedRect(-bw / 2, -bh / 2, bw, bh, radius);
-        panel.lineStyle(4, 0xC1D0A8).strokeRoundedRect(-bw / 2, -bh / 2, bw, bh, radius);
-        panel.lineStyle(3, 0xFFFFFF, 0.8).strokeRoundedRect(-bw / 2 + 8, -bh / 2 + 7, bw - 16, bh - 17, radius - 5);
-
-        const picture = this.add.image(-bw * 0.305, -3, 'all_games_icon');
-        // Preserve aspect ratio and use an asset close to its reference display size.
-        picture.setScale(Math.min(W * 0.32 / picture.width, bh * 0.92 / picture.height));
-        const label = this.add.text(bw * 0.10, -3, 'All Games', {
-            fontFamily: 'Quicksand, Arial, sans-serif', fontSize: `${W * 0.075}px`, color: '#4F4935',
-        }).setOrigin(0.5);
-        const arrowX = bw * 0.425;
-        const arrow = this.add.graphics();
-        arrow.fillStyle(0xDAE5C6).fillCircle(arrowX, 0, bh * 0.14);
-        arrow.lineStyle(5, 0x72865B, 1).beginPath();
-        arrow.moveTo(arrowX - 5, -10).lineTo(arrowX + 5, 0).lineTo(arrowX - 5, 10).strokePath();
-        button.add([panel, picture, label, arrow]);
-        this.add.zone(bx, by, bw, bh).setInteractive({ useHandCursor: true }).on('pointerdown', () => {
-            if (this._openingGames) return;
-            this._openingGames = true;
-            this.input.enabled = false;
-            this.tweens.add({
-                targets: button, scale: 0.97, y: by + 5, duration: 90, yoyo: true, ease: 'Quad.easeOut',
-                onComplete: () => this.scene.start('AllGamesScene', {
-                    characterId: localStorage.getItem('tcm_character') || 'dolly',
-                }),
+            const x = W * (0.25 + i * 0.25), y = H * 0.92, size = W * 0.17;
+            const ring = this.add.circle(x, y, size * 0.57, 0xFFF8EC, 0.8);
+            this.selectionRings.push({ ring, id: char.id });
+            const picture = this.add.image(x, y, char.happy);
+            picture.setScale(size / Math.max(picture.width, picture.height));
+            this.add.zone(x, y, W * 0.22, H * 0.12).setInteractive({ useHandCursor: true }).on('pointerdown', () => {
+                if (this._settingsOpen || this._launching) return;
+                this.characterId = char.id;
+                localStorage.setItem('tcm_character', char.id);
+                this.updatePlushie();
             });
         });
+        this.updatePlushie();
     }
 
-    choose(sprite, char) {
-        this.input.enabled = false;
-        this.tweens.killTweensOf(sprite);
+    resizeCarePicture() {
+        this.carePicture.setScale(Math.min(this.scale.width * 0.19, this.scale.height * 0.105) / Math.max(this.carePicture.width, this.carePicture.height));
+    }
 
-        this.tweens.add({
-            targets:  sprite,
-            scaleX:   (sprite.scaleX || 1) * 1.25,
-            scaleY:   (sprite.scaleY || 1) * 1.25,
-            duration: 150,
-            yoyo:     true,
-            ease:     'Back.easeOut',
-            onComplete: () => this.scene.start('PlayScene', { characterId: char.id, fromSelect: true }),
-        });
+    updatePlushie() {
+        this.carePicture.setTexture(`${this.characterId}_happy`);
+        this.resizeCarePicture();
+        const character = CHARACTERS.find(char => char.id === this.characterId);
+        this.plushieLabel.setText(`Play with ${character.name}`);
+        this.selectionRings.forEach(({ ring, id }) => ring.setStrokeStyle(id === this.characterId ? 5 : 0, 0x72865B));
     }
 }

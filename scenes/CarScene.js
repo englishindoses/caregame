@@ -508,7 +508,7 @@ class CarScene extends Phaser.Scene {
         g.gain.setValueAtTime(0.0001, now);
         g.gain.exponentialRampToValueAtTime(gain, now + 0.01);
         g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
-        o.connect(g); g.connect(this.sound.destination || ctx.destination);
+        o.connect(g); g.connect(otherSoundDestination(this));
         o.start(now); o.stop(now + dur + 0.02);
     }
 
@@ -536,7 +536,7 @@ class CarScene extends Phaser.Scene {
             g.gain.exponentialRampToValueAtTime(peak, now + 0.02);   // quick attack
             g.gain.setValueAtTime(peak, now + dur - 0.1);            // hold
             g.gain.exponentialRampToValueAtTime(0.0001, now + dur);  // release
-            o.connect(g); g.connect(this.sound.destination || ctx.destination);
+            o.connect(g); g.connect(otherSoundDestination(this));
             o.start(now); o.stop(now + dur + 0.02);
             this._hornOscs.push(o);
         });
@@ -570,7 +570,7 @@ class CarScene extends Phaser.Scene {
         g.gain.setValueAtTime(0.0001, now);
         g.gain.linearRampToValueAtTime(0.14, now + dur * 0.35);        // quick swell
         g.gain.exponentialRampToValueAtTime(0.0001, now + dur);        // fade
-        src.connect(bp); bp.connect(g); g.connect(this.sound.destination || ctx.destination);
+        src.connect(bp); bp.connect(g); g.connect(otherSoundDestination(this));
         src.start(now); src.stop(now + dur);
     }
 

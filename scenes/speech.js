@@ -34,7 +34,8 @@ function speak(text, onEnd, options = {}) {
         },
     };
     currentSpeech = handle;
-    const muted = options.muted === undefined ? localStorage.getItem('tcm_mute') === '1' : options.muted;
+    const settings = typeof readSoundSettings === 'function' ? readSoundSettings() : { other: true, volume: 1 };
+    const muted = (options.muted === undefined ? localStorage.getItem('tcm_mute') === '1' : options.muted) || !settings.other || settings.volume === 0;
     if (muted || !synth || !window.SpeechSynthesisUtterance || !text) {
         timer = window.setTimeout(finish, muted ? Math.min(2600, 300 + text.length * 45) : 700);
         return handle;
@@ -42,6 +43,7 @@ function speak(text, onEnd, options = {}) {
     try {
         utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'en-GB';
+        utterance.volume = settings.volume;
         utterance.rate = 0.9;
         utterance.pitch = 1.05;
         const voices = synth.getVoices();

@@ -1,3 +1,7 @@
+## Current navigation (2026-10-14)
+
+Home is now the activity hub with direct Care, Memory, Catch, Tidy Time and Drive buttons and a separate plushie selector. The separate All Games screen has been replaced by Home. Doors offer Home and Care; care-break mini games remain short. Hold Home's gear for parent volume and independent request/other sound settings. Earlier navigation diagrams below are historical.
+
 # Merge Plan — Preschooler Games into Plushie Friends
 
 ## The goal

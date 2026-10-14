@@ -39,3 +39,13 @@ python tests/full-games-smoke.py --laptop
 ```
 
 Checks all three menu launches, continued Catch, two repeated Tidy batches, unlimited Drive, shared door returns and resetting to mini mode.
+
+Home/navigation and parent sound checks (starts its own server):
+
+```powershell
+node --test tests/memory-rules.test.js tests/speech.test.js tests/sound-settings.test.js
+python tests/home-settings-smoke.py
+python tests/home-settings-smoke.py --laptop
+```
+
+Checks direct activity launches, label tap targets, saved plushie selection, short/cancelled/two-second settings holds, blocked taps behind settings, independent recorded request/thanks categories after playback begins, volume, synth gating, simplified doors and reload persistence. `cache-check.py` also starts its own server.

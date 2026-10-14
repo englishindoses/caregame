@@ -312,7 +312,7 @@ class TidyScene extends Phaser.Scene {
             gain.gain.exponentialRampToValueAtTime(0.22, t0 + 0.02);
             gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.5);
             osc.connect(gain);
-            gain.connect(this.sound.destination || ctx.destination);
+            gain.connect(otherSoundDestination(this));
             osc.start(t0);
             osc.stop(t0 + 0.55);
         });
@@ -614,7 +614,7 @@ class TidyScene extends Phaser.Scene {
         gain.gain.exponentialRampToValueAtTime(0.3, now + 0.01);
         gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
         osc.connect(gain);
-        gain.connect(this.sound.destination || ctx.destination);
+        gain.connect(otherSoundDestination(this));
         osc.start(now);
         osc.stop(now + 0.2);
     }

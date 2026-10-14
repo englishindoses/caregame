@@ -337,7 +337,7 @@ class CatchScene extends Phaser.Scene {
         gain.gain.exponentialRampToValueAtTime(0.22, now + 0.01);
         gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
         osc.connect(gain);
-        gain.connect(this.sound.destination || ctx.destination);
+        gain.connect(otherSoundDestination(this));
         osc.start(now);
         osc.stop(now + 0.24);
     }

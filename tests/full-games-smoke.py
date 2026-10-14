@@ -32,7 +32,7 @@ try:
 
         def click(x, y):
             box = page.locator('canvas').first.bounding_box()
-            page.mouse.click(box['x'] + x * box['width'] / 720, box['y'] + y * box['height'] / 1280)
+            page.mouse.click(box['x'] + x * box['width'] / 720, box['y'] + y * box['height'] / 1280, delay=100)
 
         def start(name, data=None):
             page.evaluate('([name,data]) => __testGame.scene.getScenes(true)[0].scene.start(name,data)', [name, data or {'characterId':'dolly'}])
@@ -41,7 +41,8 @@ try:
             page.wait_for_timeout(150)
 
         def toggle(expected):
-            click(670, 1280 * .13)
+            home = page.evaluate('()=>__testGame.scene.isActive("SelectScene")')
+            click(50 if home else 670, 1280 * (.055 if home else .13))
             page.wait_for_function('(value) => localStorage.getItem("tcm_mute") === (value ? "1" : "0")', arg=expected)
             page.evaluate('() => __testGame.sound.context.resume()')
             page.wait_for_function('(value) => __testGame.sound.mute === value', arg=expected)
@@ -50,8 +51,8 @@ try:
 
         toggle(True)
         for game, scene in [('catch','CatchScene'),('tidy','TidyScene'),('car','CarScene')]:
-            start('AllGamesScene')
-            tiles = page.evaluate('() => __testGame.scene.getScene("AllGamesScene").children.list.filter(o=>o.input && ["memory_tile","item_ball","toy_box_closed","item_car"].includes(o.texture?.key)).map(o=>({key:o.texture.key,x:o.x,y:o.y,w:o.displayWidth,h:o.displayHeight}))')
+            start('SelectScene')
+            tiles = page.evaluate('() => __testGame.scene.getScene("SelectScene").children.list.filter(o=>["memory_tile","item_ball","toy_box_closed","item_car"].includes(o.texture?.key)).map(o=>({key:o.texture.key,x:o.x,y:o.y,w:o.displayWidth,h:o.displayHeight}))')
             assert len(tiles) == 4, tiles
             assert all(t['x']-t['w']/2 >= 0 and t['x']+t['w']/2 <= 720 and t['y']+t['h']/2 < 1000 for t in tiles)
             page.screenshot(path=str(ROOT / ('tests/artifacts/full-menu-laptop.png' if '--laptop' in sys.argv else 'tests/artifacts/full-menu-phone.png')))
@@ -78,16 +79,16 @@ try:
                 page.evaluate('()=>__testGame.scene.getScene("CarScene").autoEnd()')
                 assert page.evaluate('()=>__testGame.scene.isActive("CarScene")')
             print('PASS: full', game, 'launch and continuous play', flush=True)
-            # Actual two-second door hold and Games Menu button.
+            # Actual two-second door hold and Home button.
             box=page.locator('canvas').first.bounding_box()
             page.mouse.move(box['x']+670*box['width']/720,box['y']+64*box['height']/1280)
             page.mouse.down()
             page.wait_for_timeout(2200)
             page.mouse.up()
             page.wait_for_function('()=>__testGame.scene.getScenes(true)[0]._navigationOpen')
-            point=page.evaluate('()=>{const s=__testGame.scene.getScenes(true)[0];const t=s.children.list.flatMap(o=>o.list || [o]).find(o=>o.text === "Back to Games Menu");return {x:t.x,y:t.y};}')
+            point=page.evaluate('()=>{const s=__testGame.scene.getScenes(true)[0];const t=s.children.list.flatMap(o=>o.list || [o]).find(o=>o.text === "Back to Home");return {x:t.x,y:t.y};}')
             click(point['x'],point['y'])
-            page.wait_for_function('()=>__testGame.scene.isActive("AllGamesScene")')
+            page.wait_for_function('()=>__testGame.scene.isActive("SelectScene")')
             start(scene)  # Re-enter without full mode: care-break behaviour resets.
             assert page.evaluate('(name)=>__testGame.scene.getScene(name).mode',scene) == 'mini'
             if game == 'car':

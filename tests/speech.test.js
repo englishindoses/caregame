@@ -4,7 +4,7 @@ const vm = require('node:vm');
 const fs = require('node:fs');
 const path = require('node:path');
 
-function fixture({ muted = false, available = true } = {}) {
+function fixture({ muted = false, available = true, settings = null } = {}) {
     const timers = new Map();
     let nextId = 0, utterance;
     const synth = available ? {
@@ -15,6 +15,7 @@ function fixture({ muted = false, available = true } = {}) {
         setTimeout(fn) { timers.set(++nextId, fn); return nextId; }, clearTimeout(id) { timers.delete(id); } };
     const context = vm.createContext({ window, SpeechSynthesisUtterance: window.SpeechSynthesisUtterance,
         localStorage: { getItem: () => muted ? '1' : '0' } });
+    if (settings) context.readSoundSettings = () => settings;
     vm.runInContext(fs.readFileSync(path.join(__dirname, '../scenes/speech.js'), 'utf8'), context);
     return { context, timers, get utterance() { return utterance; }, tick() { for (const [id, fn] of [...timers]) { timers.delete(id); fn(); } } };
 }
@@ -26,6 +27,19 @@ test('speech uses British English and local voice, completes only once', () => {
     assert.equal(f.utterance.voice.localService, true);
     f.utterance.onend(); f.tick();
     assert.equal(calls, 1);
+});
+test('browser voice follows parent volume and other-sounds preference without losing continuations', () => {
+    const audible = fixture({ settings: { volume: 0.4, other: true } });
+    audible.context.speak('Well done!');
+    assert.equal(audible.utterance.volume, 0.4);
+    for (const settings of [{ volume: 0, other: true }, { volume: 1, other: false }]) {
+        const silent = fixture({ settings });
+        let completed = 0;
+        silent.context.speak('Well done!', () => completed++);
+        assert.equal(silent.utterance, undefined);
+        silent.tick();
+        assert.equal(completed, 1);
+    }
 });
 test('missing, muted and failed voices still complete the flow', () => {
     for (const options of [{ available: false }, { muted: true }]) {

@@ -65,10 +65,7 @@ with sync_playwright() as p:
     page.goto(URL)
     active(page, 'SelectScene')
     page.screenshot(path=str(ARTIFACTS / 'home-phone.png'))
-    click(page, 360, 1280 * .91)
-    active(page, 'AllGamesScene')
-    page.screenshot(path=str(ARTIFACTS / 'games-phone.png'))
-    click(page, 360, 1280 * .42)
+    click(page, 180, 1280 * .40)
     active(page, 'MemoryScene')
     assert memory(page)['level'] == 1 and memory(page)['mode'] == 'full'
     page.screenshot(path=str(ARTIFACTS / 'memory-phone.png'))
@@ -136,13 +133,14 @@ with sync_playwright() as p:
     print('PASS: full mode persists promotion and step-down at set completion', flush=True)
 
     # Shared door: short hold cancels; every scene routes and keeps the plushie.
-    for scene_name in ['PlayScene','MiniGameSelectScene','CatchScene','TidyScene','CarScene','MemoryScene','AllGamesScene']:
+    for scene_name in ['PlayScene','MiniGameSelectScene','CatchScene','TidyScene','CarScene','MemoryScene']:
         start(page, scene_name, {'characterId':'bunny','mode':'full'})
         hold_door(page)
         labels = page.evaluate('() => __testGame.scene.getScenes(true)[0].children.list.filter(o=>o.type==="Container" && o.depth===200).flatMap(o=>o.list.filter(x=>x.type==="Text").map(x=>x.text))')
         assert 'Where to?' in labels
         assert ('Back to Care Game' in labels) == (scene_name != 'PlayScene')
-        assert ('Back to Games Menu' in labels) == (scene_name != 'AllGamesScene')
+        assert 'Back to Games Menu' not in labels
+        assert 'Back to Home' in labels
         page.screenshot(path=str(ARTIFACTS / ('door-' + scene_name + '.png')))
         # Outside click closes and restores paused timers/physics.
         click(page, 360, 1200)
@@ -153,18 +151,18 @@ with sync_playwright() as p:
         click(page, home['x'], home['y'])
         active(page, 'SelectScene')
         assert page.evaluate("localStorage.getItem('tcm_character')") == 'bunny'
-    print('PASS: all seven doors, destination filtering, dismissal and Home return', flush=True)
+    print('PASS: all six doors, destination filtering, dismissal and Home return', flush=True)
 
     start(page, 'MemoryScene', {'mode':'full','characterId':'bunny'})
     click(page, 670, 50)
     page.wait_for_timeout(400)
     assert not page.evaluate('() => __testGame.scene.getScene("MemoryScene")._navigationOpen')
-    for label, destination in [('Back to Games Menu','AllGamesScene'), ('Back to Care Game','PlayScene')]:
+    for label, destination in [('Back to Home','SelectScene'), ('Back to Care Game','PlayScene')]:
         start(page, 'MemoryScene', {'mode':'full','characterId':'bunny'})
         hold_door(page)
         button = page.evaluate('(label) => { const menu=__testGame.scene.getScenes(true)[0].children.list.find(o=>o.type==="Container" && o.depth===200); const text=menu.list.find(o=>o.text===label); return {x:text.x,y:text.y}; }', label)
         click(page, button['x'], button['y']); active(page, destination)
-    print('PASS: short door presses do nothing; Games Menu and Care destinations work', flush=True)
+    print('PASS: short door presses do nothing; Home and Care destinations work', flush=True)
 
     # Care retains three choices and its two-tray break.
     start(page, 'PlayScene', {'characterId':'bunny'})

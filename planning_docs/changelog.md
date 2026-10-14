@@ -1,3 +1,9 @@
+## 2026-10-14 - Home activity hub and parent settings
+
+Home now offers Care and the four full games directly, with separate saved plushie selection. The old All Games screen redirects to Home. Shared doors offer Home and Care; care breaks retain their short games. Both selection grids use the same game order and generous picture-plus-label tap targets.
+
+A two-second hold on Home's gear opens parent settings: overall volume, Dolly request sound, and other sounds. Request sound controls care requests for all plushies independently of thanks and other audio. Preferences persist across games/reloads, including browser voice and synth effects, while master mute remains a separate quick control. Cache updated to tcm-v15.
+
 ## 2026-10-14 - Selection screen spacing and artwork
 
 Both game menus use the name Tidy Time and show Memory as two sage-and-cream heart card backs. The four-tile grids reserve space for labels, header controls, animated press feedback and the plushie below the grid. Phone and laptop layout checks include animation bounds.

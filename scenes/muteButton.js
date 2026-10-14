@@ -1,5 +1,6 @@
 // One saved mute preference for recorded voice, browser speech and synth effects.
-function addMuteButton(scene) {
+function addMuteButton(scene, position = {}) {
+    applySoundSettings(scene);
     let muted = localStorage.getItem('tcm_mute') === '1';
     const applyMute = () => {
         scene.sound.mute = muted;
@@ -12,7 +13,7 @@ function addMuteButton(scene) {
     };
     applyMute();
     const W = scene.scale.width, H = scene.scale.height;
-    const x = W - 50, y = H * 0.13, size = Math.max(84, W * 0.115);
+    const x = position.x === undefined ? W - 50 : position.x, y = position.y === undefined ? H * 0.13 : position.y, size = Math.max(84, W * 0.115);
     const icon = scene.add.graphics().setDepth(220);
     const redraw = () => {
         icon.clear();

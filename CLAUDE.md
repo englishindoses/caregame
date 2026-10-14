@@ -1,3 +1,11 @@
+## Home hub and parent sound settings (2026-10-14)
+
+- Home (`SelectScene`) now opens Care, Memory, Catch, Tidy Time and Drive directly. The bottom plushie selector changes the saved character without launching care. Game pictures, labels and their surrounding areas are tappable. Full and mini menus use the same game order.
+- The separate All Games menu is replaced by Home; `AllGamesScene` remains only as a compatibility redirect. Doors offer Home and Care, omitting the current destination. Care retains its two-tray break and short mini modes.
+- Hold Home's settings gear for two seconds. Parent settings save overall volume (`tcm_volume`), care-request sound (`tcm_request_sound`) and all other sounds (`tcm_other_sound`). Request sound controls `request_*` recordings for every plushie; thanks, praise, instructions, names and effects are other sounds. The quick master mute remains independent.
+- `scenes/soundSettings.js` controls recorded sound categories, browser speech volume and synthesised effects. Silent recordings retain their completion callbacks; disabled browser speech still completes continuations. Service-worker cache is `tcm-v15`.
+- Checks: `tests/home-settings-smoke.py` (also `--laptop`), updated cache/full-game checks and `tests/sound-settings.test.js`. Real-device audio/touch testing remains pending.
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.

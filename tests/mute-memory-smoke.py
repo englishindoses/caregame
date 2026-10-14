@@ -32,7 +32,7 @@ try:
 
         def click(x, y):
             box = page.locator('canvas').first.bounding_box()
-            page.mouse.click(box['x'] + x * box['width'] / 720, box['y'] + y * box['height'] / 1280)
+            page.mouse.click(box['x'] + x * box['width'] / 720, box['y'] + y * box['height'] / 1280, delay=100)
 
         def start(name, data=None):
             page.evaluate('([name,data]) => __testGame.scene.getScenes(true)[0].scene.start(name,data)', [name, data or {'characterId':'dolly'}])
@@ -41,7 +41,8 @@ try:
             page.wait_for_timeout(150)
 
         def toggle(expected):
-            click(670, 1280 * .13)
+            home = page.evaluate('()=>__testGame.scene.isActive("SelectScene")')
+            click(50 if home else 670, 1280 * (.055 if home else .13))
             page.wait_for_function('(value) => localStorage.getItem("tcm_mute") === (value ? "1" : "0")', arg=expected)
             page.evaluate('() => __testGame.sound.context.resume()')
             page.wait_for_function('(value) => __testGame.sound.mute === value', arg=expected)
@@ -49,7 +50,7 @@ try:
             assert page.evaluate('() => __testGame.sound.masterMuteNode.gain.value') == (0 if expected else 1)
 
         toggle(True)
-        scenes = [] if '--memory-only' in sys.argv else ['AllGamesScene','PlayScene','MiniGameSelectScene','CatchScene','TidyScene','CarScene','MemoryScene','SelectScene']
+        scenes = [] if '--memory-only' in sys.argv else ['PlayScene','MiniGameSelectScene','CatchScene','TidyScene','CarScene','MemoryScene','SelectScene']
         for name in scenes:
             start(name)
             assert page.evaluate('() => __testGame.sound.mute')

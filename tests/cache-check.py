@@ -21,7 +21,7 @@ scripts = re.findall(r'<script src="([^":]+\.js)"', (ROOT / 'index.html').read_t
 assert all(script in assets for script in scripts), 'A runtime script is missing from precache'
 expected = ['assets/images/bg_memory.webp', 'assets/images/all_games_icon.webp', 'assets/images/toy_box_closed.png', 'data/memory.js', 'data/allgames.js',
             'scenes/MemoryScene.js', 'scenes/AllGamesScene.js', 'scenes/doorButton.js',
-            'scenes/speech.js', 'scenes/muteButton.js', 'scenes/characterSwitcher.js', 'scenes/memoryArt.js',
+            'scenes/soundSettings.js', 'scenes/speech.js', 'scenes/muteButton.js', 'scenes/characterSwitcher.js', 'scenes/memoryArt.js',
             'assets/audio/well_done_1.mp3', 'assets/audio/item_name_ball.mp3']
 assert all(asset in assets for asset in expected)
 print('PASS: all local precache paths exist; new runtime scripts and Memory media included', flush=True)
@@ -53,7 +53,7 @@ with sync_playwright() as p:
     page.goto('http://127.0.0.1:' + str(server.server_port) + '/')
     page.wait_for_function('() => window.__testGame?.scene.isActive("SelectScene")')
     page.evaluate('() => navigator.serviceWorker.ready')
-    page.evaluate('async ([cdn, bundle]) => { const cache = await caches.open("tcm-v14"); await cache.put(cdn, new Response(bundle, {headers:{"Content-Type":"application/javascript"}})); }', [cdn, bundle])
+    page.evaluate('async ([cdn, bundle]) => { const cache = await caches.open("tcm-v15"); await cache.put(cdn, new Response(bundle, {headers:{"Content-Type":"application/javascript"}})); }', [cdn, bundle])
     for asset in expected:
         assert page.evaluate('async asset => !!(await caches.match(new URL(asset,location.href)))', asset), asset
     # All local offline requests must be served by the worker, not HTTP routes.
@@ -64,9 +64,7 @@ with sync_playwright() as p:
     context.unroute(cdn)
     page.reload()
     page.wait_for_function('() => window.__testGame?.scene.isActive("SelectScene")')
-    page.evaluate('() => __testGame.scene.getScene("SelectScene").scene.start("AllGamesScene")')
-    page.wait_for_function('() => __testGame.scene.isActive("AllGamesScene")')
-    page.evaluate('() => __testGame.scene.getScene("AllGamesScene").scene.start("MemoryScene",{mode:"full"})')
+    page.evaluate('() => __testGame.scene.getScene("SelectScene").scene.start("MemoryScene",{mode:"full"})')
     page.wait_for_function('() => __testGame.scene.getScene("MemoryScene").cards?.length === 4')
     for name in ['CatchScene', 'TidyScene', 'CarScene']:
         page.evaluate('(name) => __testGame.scene.getScenes(true)[0].scene.start(name,{mode:"full",characterId:"dolly"})', name)
@@ -75,5 +73,5 @@ with sync_playwright() as p:
     assert page.evaluate('() => __testGame.textures.exists("toy_box_open")')
     assert page.evaluate('() => __testGame.cache.audio.exists("boing_1")')
     assert not errors, errors
-    print('PASS: new assets cached before first visit; offline Home, All Games, Memory, Catch, Tidy and Drive', flush=True)
+    print('PASS: new assets cached before first visit; offline Home, Memory, Catch, Tidy and Drive', flush=True)
     browser.close()

@@ -1,10 +1,11 @@
-const CACHE_NAME = 'tcm-v14';
+const CACHE_NAME = 'tcm-v15';
 
 const ASSETS = [
     './',
     './main.js',
     './data/memory.js',
     './data/allgames.js',
+    './scenes/soundSettings.js',
     './scenes/speech.js',
     './scenes/muteButton.js',
     './scenes/characterSwitcher.js',
