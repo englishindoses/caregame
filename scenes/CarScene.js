@@ -37,6 +37,7 @@ class CarScene extends Phaser.Scene {
     }
 
     create() {
+        addMuteButton(this);
         // Portrait, like every other scene — no orientation flip, no rotate
         // prompt. The dashboard art sits full-width along the bottom and the
         // road shows through its windscreen hole; scenery fills the top.
@@ -66,7 +67,7 @@ class CarScene extends Phaser.Scene {
         this.buildWheel();             // sets _wheelCx/Cy/R used by the two below
         this.buildIndicatorLights();   // green tell-tales on the dash, behind the wheel
         this.buildStalks();            // wiper stalk (left) + indicator stalk (right)
-        this.buildExitButton();
+        addDoorButton(this);
 
         // Soft engine hum if the clip exists (no synth fallback — silence is fine).
         if (this.cache.audio.exists('engine_hum')) {
@@ -479,84 +480,13 @@ class CarScene extends Phaser.Scene {
     stalkAction(s, dir) {
         if (s.kind === 'wiper') {
             this.startWipers();
-            this.settleStalk(s);                                 // momentary — springs back
+            this.settleStalk(s); // momentary: springs back
         } else {
-            this.setIndicator(dir === 'up' ? 'left' : 'right');  // setIndicator settles the stalk
+            this.setIndicator(dir === 'up' ? 'left' : 'right');
         }
     }
 
-    // ── Exit menu (door button → menu of destinations) ───────────────────────
-
-    buildExitButton() {
-        const ZX = this.W - 50, ZY = 50;
-        const dW = 36, dH = 50, dX = ZX - dW / 2, dY = ZY - dH / 2;
-        const icon = this.add.graphics().setDepth(50);
-        icon.fillStyle(0xFFFFFF, 0.18); icon.fillRoundedRect(dX, dY, dW, dH, 5);
-        icon.lineStyle(2.5, 0xFFFFFF, 0.65); icon.strokeRoundedRect(dX, dY, dW, dH, 5);
-        icon.fillStyle(0xFFFFFF, 0.8); icon.fillCircle(ZX - 8, ZY + 3, 3.5);
-        this.add.zone(ZX, ZY, 100, 100).setDepth(51).setInteractive({ useHandCursor: true })
-            .on('pointerdown', () => this.openExitMenu());
-    }
-
-    openExitMenu() {
-        if (this._menu) return;
-        const { W, H } = this;
-        const menu = this.add.container(0, 0).setDepth(100);
-
-        const backdrop = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.55)
-            .setInteractive();
-        backdrop.on('pointerdown', () => this.closeExitMenu());
-
-        const panelW = W * 0.5, panelH = H * 0.62;
-        const panel = this.add.graphics();
-        panel.fillStyle(0xF2E4D4, 1);
-        panel.fillRoundedRect(W / 2 - panelW / 2, H / 2 - panelH / 2, panelW, panelH, 28);
-
-        const title = this.add.text(W / 2, H / 2 - panelH / 2 + 44, 'Where to?', {
-            fontFamily: 'Quicksand, Arial, sans-serif', fontSize: '44px',
-            color: '#5a4632', fontStyle: 'bold',
-        }).setOrigin(0.5);
-
-        menu.add([backdrop, panel, title]);
-
-        const opts = [
-            ['Main Game',        () => this.leaveTo('PlayScene', { fromMinigame: true })],
-            ['Mini-Game Select', () => this.leaveTo('MiniGameSelectScene')],
-            ['Character Select', () => this.leaveTo('SelectScene')],
-        ];
-        const bw = panelW * 0.82, bh = 78, gap = 22;
-        const firstY = H / 2 - ((opts.length - 1) * (bh + gap)) / 2 + 20;
-        opts.forEach(([label, fn], i) => {
-            const y = firstY + i * (bh + gap);
-            const bg = this.add.graphics();
-            bg.fillStyle(0xE08D5A, 1);
-            bg.fillRoundedRect(W / 2 - bw / 2, y - bh / 2, bw, bh, 20);
-            const txt = this.add.text(W / 2, y, label, {
-                fontFamily: 'Quicksand, Arial, sans-serif', fontSize: '34px',
-                color: '#ffffff', fontStyle: 'bold',
-            }).setOrigin(0.5);
-            const z = this.add.zone(W / 2, y, bw, bh).setInteractive({ useHandCursor: true });
-            z.on('pointerover', () => { bg.clear(); bg.fillStyle(0xd07a45, 1);
-                bg.fillRoundedRect(W / 2 - bw / 2, y - bh / 2, bw, bh, 20); });
-            z.on('pointerout',  () => { bg.clear(); bg.fillStyle(0xE08D5A, 1);
-                bg.fillRoundedRect(W / 2 - bw / 2, y - bh / 2, bw, bh, 20); });
-            z.on('pointerdown', fn);
-            menu.add([bg, txt, z]);
-        });
-
-        this._menu = menu;
-    }
-
-    closeExitMenu() {
-        if (this._menu) { this._menu.destroy(true); this._menu = null; }
-    }
-
-    leaveTo(sceneKey, extra) {
-        this.closeExitMenu();
-        this.scene.start(sceneKey, Object.assign({ characterId: this.characterId }, extra || {}));
-    }
-
-    // ── Audio (fire-and-forget; synth fallbacks; never locks input) ──────────
+    // Independent audio with synth fallbacks, never locking input.
 
     _ctx() {
         const c = this.sound.context;
@@ -575,7 +505,7 @@ class CarScene extends Phaser.Scene {
         g.gain.setValueAtTime(0.0001, now);
         g.gain.exponentialRampToValueAtTime(gain, now + 0.01);
         g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
-        o.connect(g); g.connect(ctx.destination);
+        o.connect(g); g.connect(this.sound.destination || ctx.destination);
         o.start(now); o.stop(now + dur + 0.02);
     }
 
@@ -603,7 +533,7 @@ class CarScene extends Phaser.Scene {
             g.gain.exponentialRampToValueAtTime(peak, now + 0.02);   // quick attack
             g.gain.setValueAtTime(peak, now + dur - 0.1);            // hold
             g.gain.exponentialRampToValueAtTime(0.0001, now + dur);  // release
-            o.connect(g); g.connect(ctx.destination);
+            o.connect(g); g.connect(this.sound.destination || ctx.destination);
             o.start(now); o.stop(now + dur + 0.02);
             this._hornOscs.push(o);
         });
@@ -637,7 +567,7 @@ class CarScene extends Phaser.Scene {
         g.gain.setValueAtTime(0.0001, now);
         g.gain.linearRampToValueAtTime(0.14, now + dur * 0.35);        // quick swell
         g.gain.exponentialRampToValueAtTime(0.0001, now + dur);        // fade
-        src.connect(bp); bp.connect(g); g.connect(ctx.destination);
+        src.connect(bp); bp.connect(g); g.connect(this.sound.destination || ctx.destination);
         src.start(now); src.stop(now + dur);
     }
 

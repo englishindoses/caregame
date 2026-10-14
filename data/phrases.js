@@ -34,6 +34,18 @@ const PHRASES = {
     // ── Little Driver (car) mini-game ────────────────────────────────────────
     driveChosen:   ['drive_chosen_1', 'drive_chosen_2'],  // tapped the car tile (silent until recorded)
 
+    // Whole-line browser voice placeholders; recordings cover names and praise.
+    memoryChosen: [],
+    memoryPraise: [
+        { key: 'thank_you_5', text: "You're the best!" },
+        { key: 'well_done_1', text: 'Well done!' },
+    ],
+    memory: {
+        guided: 'Look! Find the matching pairs.',
+        look: 'Look!', find: 'Can you find the pairs?', peek: 'Take a peek!',
+        other: name => `Where's the other ${name}?`,
+    },
+
     chosen:     ['chosen', 'chosen_2', 'chosen_3'],
     _chosenIdx: 0,
     nextChosen() {

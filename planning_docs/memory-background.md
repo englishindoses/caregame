@@ -1,0 +1,7 @@
+# Memory background asset
+
+Created with the built-in imagegen tool, using `assets/images/bg_room.webp` as a style reference. The bedroom image was left unchanged. The generated output was resized to the 720 x 1280 reference canvas and saved as `assets/images/bg_memory.webp` (WebP, quality 88). The Memory card fronts, ball tile and plushies reuse existing images; the card backs and menu tile are drawn in Phaser. All Games reuses the existing bedroom background.
+
+## Generation prompt
+
+Use case: illustration-story. Create one new portrait 720x1280 background asset for a toddler Memory/Pairs game in My Plushie Friends. The supplied bedroom image is STYLE REFERENCE ONLY: match its warm peach and cream palette, soft 3D storybook rendering, rounded shapes, matte textures and gentle afternoon light. New subject: a softly padded cream play mat / tabletop viewed directly from above, with a broad clean plain central cream surface extending across at least 85% of the image width and from 15% to 85% of the height, so a two-column by three-row card grid can be overlaid in code. Subtle rounded peach wooden frame close to the image perimeter and a very few softly blurred pastel fabric edges outside the frame; keep centre totally empty. Upper and lower areas quiet for interface text and a plushie overlay. No cards, no characters, no toys, no text, no words, no letters, no interface, no strong grain or distracting patterned details. Fill entire image, opaque background. This is a new background; do not modify the supplied bedroom file.

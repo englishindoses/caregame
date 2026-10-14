@@ -1,6 +1,4 @@
-// "What shall we play?" — shown after 3 cleared trays of the main game.
-// For now there is only one tile (Catch), but the layout adapts to up to 4
-// entries in MINIGAMES so adding more is just a data edit.
+// Care-game break menu, with four picture tiles.
 class MiniGameSelectScene extends Phaser.Scene {
     constructor() {
         super('MiniGameSelectScene');
@@ -34,12 +32,16 @@ class MiniGameSelectScene extends Phaser.Scene {
     }
 
     create() {
+        addMuteButton(this);
         const W = this.scale.width;
         const H = this.scale.height;
         this.W = W;
         this.H = H;
 
         this.setupAudioQueue();
+        this._launching = false;
+        this.memoryVoice = createSceneVoice(this);
+        makeMemoryTileTexture(this);
 
         // Same bedroom so the transition from PlayScene feels continuous.
         if (this.textures.exists('bg_room')) {
@@ -48,7 +50,7 @@ class MiniGameSelectScene extends Phaser.Scene {
             this.add.rectangle(W / 2, H / 2, W, H, 0xF2E4D4);
         }
 
-        this.add.text(W / 2, H * 0.10, 'What shall we play?', {
+        this.add.text(W * 0.55, H * 0.10, 'What shall\nwe play?', {
             fontFamily: 'Arial, sans-serif',
             fontSize:   '64px',
             color:      '#ffffff',
@@ -64,6 +66,7 @@ class MiniGameSelectScene extends Phaser.Scene {
             const cx = W * 0.20;
             const cy = H * 0.82;
             const sprite = this.add.image(cx, cy, charKey);
+            this.charSprite = sprite;
             const maxDim = Math.min(W * 0.32, H * 0.22);
             sprite.setScale(maxDim / Math.max(sprite.width, sprite.height));
             sprite.setDepth(5);
@@ -77,6 +80,12 @@ class MiniGameSelectScene extends Phaser.Scene {
             });
         }
 
+        addCharacterSwitcher(this, () => {
+            if (this.charSprite) {
+                this.charSprite.setTexture(`${this.characterId}_happy`);
+                this.charSprite.setScale(Math.min(W * 0.32, H * 0.22) / Math.max(this.charSprite.width, this.charSprite.height));
+            }
+        });
         this.buildTiles();
         addDoorButton(this);   // hold-to-exit, same as the main game
 
@@ -143,8 +152,9 @@ class MiniGameSelectScene extends Phaser.Scene {
             ease:     'Sine.easeInOut',
         });
 
-        target.once('pointerdown', () => {
-            if (this._inputLocked) return;
+        target.on('pointerdown', () => {
+            if (this._inputLocked || this._launching || this._navigationOpen) return;
+            this._launching = true;
             this.tweens.killTweensOf(target);
             target.setScale(baseScale);
             this.tweens.add({
@@ -154,11 +164,16 @@ class MiniGameSelectScene extends Phaser.Scene {
                 yoyo:     true,
                 ease:     'Back.easeOut',
             });
-            const chosenPool = PHRASES[game.chosenGroup] || PHRASES.playCatch;
-            this.queueAudio(Phaser.Utils.Array.GetRandom(chosenPool));
-            this.queueThen(() => {
-                this.scene.start(game.scene, { characterId: this.characterId });
+            const launch = () => this.time.delayedCall(0, () => {
+                this.scene.start(game.scene, { characterId: this.characterId, mode: game.mode });
             });
+            if (game.chosenText) {
+                this.memoryVoice.play(null, game.chosenText, launch);
+            } else {
+                const chosenPool = PHRASES[game.chosenGroup] || PHRASES.playCatch;
+                this.queueAudio(Phaser.Utils.Array.GetRandom(chosenPool));
+                this.queueThen(launch);
+            }
         });
     }
 

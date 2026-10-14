@@ -42,6 +42,7 @@ class TidyScene extends Phaser.Scene {
     }
 
     create() {
+        addMuteButton(this);
         const W = this.scale.width;
         const H = this.scale.height;
         this.W = W;
@@ -81,6 +82,13 @@ class TidyScene extends Phaser.Scene {
         this.remaining = this.toyDefs.length;
         this._ending   = false;
         this._voice    = null;
+        this.events.once('shutdown', () => {
+            if (this._voice) {
+                this._voice.stop();
+                this._voice.destroy();
+                this._voice = null;
+            }
+        });
 
         this._dragLocked   = false;   // gate toy dragging during a name reveal / the finale
         this._revealActive = false;   // a dropped toy's name is on screen, waiting for a tap
@@ -115,6 +123,7 @@ class TidyScene extends Phaser.Scene {
         this.buildNameText();
         this.spawnToys();
         this.setupDrag();
+        addCharacterSwitcher(this, () => this.setCharEmotion('happy'));
         addDoorButton(this);   // hold-to-exit, same as the main game
 
         // In-scene opening, while the toys drop in (tidy_chosen_2 / _3, cycled).
@@ -302,7 +311,7 @@ class TidyScene extends Phaser.Scene {
             gain.gain.exponentialRampToValueAtTime(0.22, t0 + 0.02);
             gain.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.5);
             osc.connect(gain);
-            gain.connect(ctx.destination);
+            gain.connect(this.sound.destination || ctx.destination);
             osc.start(t0);
             osc.stop(t0 + 0.55);
         });
@@ -598,7 +607,7 @@ class TidyScene extends Phaser.Scene {
         gain.gain.exponentialRampToValueAtTime(0.3, now + 0.01);
         gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
         osc.connect(gain);
-        gain.connect(ctx.destination);
+        gain.connect(this.sound.destination || ctx.destination);
         osc.start(now);
         osc.stop(now + 0.2);
     }

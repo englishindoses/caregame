@@ -32,6 +32,7 @@ class CatchScene extends Phaser.Scene {
     }
 
     create() {
+        addMuteButton(this);
         const W = this.scale.width;
         const H = this.scale.height;
         this.W = W;
@@ -126,6 +127,7 @@ class CatchScene extends Phaser.Scene {
             this.releaseThrow(pts);
         });
 
+        addCharacterSwitcher(this, () => this.setCharEmotion('happy'));
         addDoorButton(this);   // hold-to-exit, same as the main game
 
         // Short silent opening beat so the ball isn't live the instant the scene
@@ -334,7 +336,7 @@ class CatchScene extends Phaser.Scene {
         gain.gain.exponentialRampToValueAtTime(0.22, now + 0.01);
         gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
         osc.connect(gain);
-        gain.connect(ctx.destination);
+        gain.connect(this.sound.destination || ctx.destination);
         osc.start(now);
         osc.stop(now + 0.24);
     }

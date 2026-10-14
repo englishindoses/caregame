@@ -11,6 +11,7 @@ class PlayScene extends Phaser.Scene {
     }
 
     create() {
+        addMuteButton(this);
         const W = this.scale.width;
         const H = this.scale.height;
         this.W = W;
@@ -88,7 +89,7 @@ class PlayScene extends Phaser.Scene {
         }
         this.charSprite.setDepth(5);
 
-        this.addDoorButton();
+        addDoorButton(this);
         this.buildCharacterSwitcher();
         this.startIdle();
 
@@ -97,49 +98,10 @@ class PlayScene extends Phaser.Scene {
     // ── Character switcher ───────────────────────────────────────────────────
 
     buildCharacterSwitcher() {
-        if (this._switcherBgs)    this._switcherBgs.forEach(o => o.destroy());
-        if (this._switcherImgs)   this._switcherImgs.forEach(o => o.destroy());
-        this._switcherBgs  = [];
-        this._switcherImgs = [];
-
-        const SIZE = Math.round(this.W * 0.14);
-        const PAD  = 10;
-        const cx   = PAD + SIZE / 2;
-
-        CHARACTERS.filter(c => c.id !== this.characterId).forEach((char, i) => {
-            const cy  = PAD + SIZE / 2 + i * (SIZE + PAD);
-            const key = char.neutral;
-
-            const bg = this.add.circle(cx, cy, SIZE / 2 + 6, 0xFFFFFF, 0.55).setDepth(19);
-            this._switcherBgs.push(bg);
-
-            let img;
-            if (this.textures.exists(key)) {
-                img = this.add.image(cx, cy, key);
-                img.setScale(SIZE / Math.max(img.width, img.height));
-            } else {
-                img = this.add.circle(cx, cy, SIZE / 2, char.color);
-            }
-            img.setDepth(20).setInteractive();
-
-            img.on('pointerdown', () => {
-                this.characterId = char.id;
-                localStorage.setItem('tcm_character', this.characterId);
-                this.setCharEmotion('neutral');
-                this.buildCharacterSwitcher();
-            });
-
-            this._switcherImgs.push(img);
-        });
+        addCharacterSwitcher(this, () => this.setCharEmotion('neutral'));
     }
 
-    // ── Audio queue ──────────────────────────────────────────────────────────
-    //
-    // Mobile browsers (especially iOS) block Web Audio until the first user
-    // gesture. Phaser resumes the AudioContext on first touch and emits
-    // 'unlocked' on the sound manager. The queue holds keys while locked and
-    // drains automatically once unlocked.
-
+    // Mobile audio unlock drains the queue; shutdown stops scene-owned sound.
     setupAudioQueue() {
         this._queue        = [];
         this._busy         = false;
@@ -208,72 +170,7 @@ class PlayScene extends Phaser.Scene {
         snd.play();
     }
 
-    // ── Door button ───────────────────────────────────────────────────────────
-    //
-    // Small door icon in the top-right corner. Hold for 2 seconds to go back
-    // to the character select screen. The arc that draws during the hold gives
-    // parents subtle feedback without attracting a child's attention.
-
-    addDoorButton() {
-        const { W } = this;
-        const ZX = W - 50;
-        const ZY = 50;
-
-        // Draw door icon
-        const dW = 36, dH = 50;
-        const dX = ZX - dW / 2;
-        const dY = ZY - dH / 2;
-
-        const icon = this.add.graphics().setDepth(30);
-        icon.fillStyle(0xFFFFFF, 0.18);
-        icon.fillRoundedRect(dX, dY, dW, dH, 5);
-        icon.lineStyle(2.5, 0xFFFFFF, 0.65);
-        icon.strokeRoundedRect(dX, dY, dW, dH, 5);
-        // doorknob on the left side
-        icon.fillStyle(0xFFFFFF, 0.8);
-        icon.fillCircle(ZX - 8, ZY + 3, 3.5);
-
-        const zone = this.add.zone(ZX, ZY, 100, 100).setDepth(31).setInteractive();
-
-        let arcGfx  = null;
-        let arcObj  = null;
-        let arcTween = null;
-
-        const cancelHold = () => {
-            if (arcTween) { arcTween.stop();  arcTween = null; }
-            if (arcGfx)   { arcGfx.destroy(); arcGfx = null; }
-            arcObj = null;
-        };
-
-        zone.on('pointerdown', () => {
-            arcObj  = { t: 0 };
-            arcGfx  = this.add.graphics().setDepth(32);
-            arcTween = this.tweens.add({
-                targets:  arcObj,
-                t:        1,
-                duration: 2000,
-                ease:     'Linear',
-                onUpdate: () => {
-                    arcGfx.clear();
-                    arcGfx.lineStyle(4, 0xFFFFFF, 0.75);
-                    arcGfx.beginPath();
-                    arcGfx.arc(ZX, ZY, 26, -Math.PI / 2,
-                        -Math.PI / 2 + Math.PI * 2 * arcObj.t, false);
-                    arcGfx.strokePath();
-                },
-                onComplete: () => {
-                    this.input.off('pointerup', cancelHold);
-                    arcGfx.destroy(); arcGfx = null;
-                    arcTween = null;
-                    localStorage.removeItem('tcm_character');
-                    this.scene.start('SelectScene');
-                },
-            });
-            this.input.once('pointerup', cancelHold);
-        });
-    }
-
-    // ── Character animation ──────────────────────────────────────────────────
+    // Character animation
 
     startIdle() {
         if (this.idleTween || this._celebrating) return;

@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(node --check scenes/PlayScene.js)",
+      "Bash(node --check scenes/BootScene.js)",
+      "Bash(node --check data/phrases.js)",
+      "Bash(node --check data/items.js)",
+      "Bash(node -e ' *)",
+      "Read(//c/Users/k-sam/.claude/skills/docx/**)",
+      "Bash(python scripts/office/validate.py \"C:/Users/k-sam/OneDrive/Desktop/game-creation/game/planning_docs/assets-to-create.docx\")",
+      "Bash(PYTHONUTF8=1 PYTHONIOENCODING=utf-8 python scripts/office/validate.py \"C:/Users/k-sam/OneDrive/Desktop/game-creation/game/planning_docs/assets-to-create.docx\")",
+      "Bash(python -c \"import fitz; print\\('pymupdf', fitz.__doc__[:30]\\)\")",
+      "Bash(python -c \"import pdf2image; print\\('pdf2image available'\\)\")",
+      "Bash(where magick *)",
+      "Bash(where gswin64c *)",
+      "Bash(pip install *)",
+      "Bash(python -c \"import fitz; print\\('pymupdf OK'\\)\")",
+      "Bash(git commit -q -m ' *)",
+      "Bash(node --check scenes/CatchScene.js)",
+      "Bash(node --check scenes/MiniGameSelectScene.js)",
+      "Bash(node --check scenes/TidyScene.js)",
+      "Bash(node --check data/minigames.js)"
+    ]
+  }
+}

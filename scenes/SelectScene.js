@@ -3,7 +3,16 @@ class SelectScene extends Phaser.Scene {
         super('SelectScene');
     }
 
+    preload() {
+        if (!this.textures.exists('all_games_icon')) {
+            this.load.image('all_games_icon', 'assets/images/all_games_icon.webp');
+        }
+    }
+
     create() {
+        addMuteButton(this);
+        this.input.enabled = true;
+        this._openingGames = false;
         const W = this.scale.width;
         const H = this.scale.height;
 
@@ -54,6 +63,43 @@ class SelectScene extends Phaser.Scene {
             });
 
             sprite.on('pointerdown', () => this.choose(sprite, char));
+        });
+        this.buildAllGamesButton(W, H);
+    }
+
+    buildAllGamesButton(W, H) {
+        const bx = W / 2, by = H * 0.89, bw = W * 0.86, bh = H * 0.155;
+        const radius = bh * 0.25;
+        const button = this.add.container(bx, by);
+        const panel = this.add.graphics();
+        panel.fillStyle(0x6B4D36, 0.17).fillRoundedRect(-bw / 2 + 4, -bh / 2 + 15, bw, bh, radius);
+        panel.fillStyle(0x9DAF86).fillRoundedRect(-bw / 2, -bh / 2 + 8, bw, bh, radius);
+        panel.fillStyle(0xF0F4E6).fillRoundedRect(-bw / 2, -bh / 2, bw, bh, radius);
+        panel.lineStyle(4, 0xC1D0A8).strokeRoundedRect(-bw / 2, -bh / 2, bw, bh, radius);
+        panel.lineStyle(3, 0xFFFFFF, 0.8).strokeRoundedRect(-bw / 2 + 8, -bh / 2 + 7, bw - 16, bh - 17, radius - 5);
+
+        const picture = this.add.image(-bw * 0.305, -3, 'all_games_icon');
+        // Preserve aspect ratio and use an asset close to its reference display size.
+        picture.setScale(Math.min(W * 0.32 / picture.width, bh * 0.92 / picture.height));
+        const label = this.add.text(bw * 0.10, -3, 'All Games', {
+            fontFamily: 'Quicksand, Arial, sans-serif', fontSize: `${W * 0.075}px`, color: '#4F4935',
+        }).setOrigin(0.5);
+        const arrowX = bw * 0.425;
+        const arrow = this.add.graphics();
+        arrow.fillStyle(0xDAE5C6).fillCircle(arrowX, 0, bh * 0.14);
+        arrow.lineStyle(5, 0x72865B, 1).beginPath();
+        arrow.moveTo(arrowX - 5, -10).lineTo(arrowX + 5, 0).lineTo(arrowX - 5, 10).strokePath();
+        button.add([panel, picture, label, arrow]);
+        this.add.zone(bx, by, bw, bh).setInteractive({ useHandCursor: true }).on('pointerdown', () => {
+            if (this._openingGames) return;
+            this._openingGames = true;
+            this.input.enabled = false;
+            this.tweens.add({
+                targets: button, scale: 0.97, y: by + 5, duration: 90, yoyo: true, ease: 'Quad.easeOut',
+                onComplete: () => this.scene.start('AllGamesScene', {
+                    characterId: localStorage.getItem('tcm_character') || 'dolly',
+                }),
+            });
         });
     }
 

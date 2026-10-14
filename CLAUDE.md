@@ -2,6 +2,26 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Current implementation after the Memory merge (2026-10-14)
+
+This section reflects the current code and supersedes older descriptions below where they differ.
+
+- Home's All Games button uses a large generated ball/puzzle/blocks illustration (`all_games_icon.webp`), a rounded sage-and-cream panel and press feedback. SelectScene loads the picture; it is precached for offline use.
+- Every screen has the shared speaker/mute button (`scenes/muteButton.js`), including Home and loading. It saves `tcm_mute`, cancels browser speech without losing its continuation, and routes synthesized effects through Phaser's master mute output. The Tidy mini-menu tile uses the closed toy-box image, now precached.
+- Normal boot always opens Home (`SelectScene`), with the original three plushie choices and a new All Games button. `?mini` opens the mini-game menu; `?memory` opens full Memory for development.
+- The care game's request, reward, hint, audio and deck rules are unchanged. Its existing break remains after **two trays**, not three.
+- `AllGamesScene` uses `ALL_GAMES` from `data/allgames.js` and currently offers only full Memory. `MINIGAMES` now offers Catch, Tidy, Drive and short Memory.
+- `MemoryScene` uses the existing 15 item images, existing plushies, recorded toy-name/praise/sleepy audio, and whole-line British browser voices for new instructions. Its new warm play-mat background is `assets/images/bg_memory.webp`; All Games reuses `bg_room`.
+- Full Memory retains the source game's ladder: guided boards of 4, 4, 6, 6 cards; level 2 has 4 cards with a 2-second preview; level 3 has 4 face-down cards; level 4 has 6 cards with a preview. Five cleared sets advance a memory level; four mismatches in a set step down (never below level 2). Four flips without a match reveal unmatched cards briefly. `data/memory.js` contains these rules.
+- Memory praise alternates the recorded `well_done_1` (Well done!) and `thank_you_5` (You're the best!) for matches and set celebrations, starting with "You're the best!".
+- Only full mode saves `tcm_memory_level`. Mini mode always uses level 3 (four cards initially face down, no opening preview), plays three sets, celebrates, becomes sleepy and returns to care. It never advances or lowers the full-game level. Board/set counters reset when full Memory is reopened, as in the source game.
+- All screens except Home share `addDoorButton(scene)`: hold for 2 seconds, then choose Back to Care Game / Back to Games Menu / Back to Home. The current destination is omitted. Outside taps dismiss the menu. Leaving preserves the selected plushie. Scene timers and physics pause while the menu is open.
+- `scenes/characterSwitcher.js` shares the existing stacked corner thumbnails across scenes with a plushie. `scenes/speech.js` owns recorded/browser voice playback with mute, fallback timers and shutdown cleanup. `scenes/memoryArt.js` creates a two-card Memory tile from the existing ball art.
+- Drive currently stays **portrait**, uses draggable wiper/indicator stalks and automatically returns after `CAR_CONFIG.AUTO_END_MS` (60000). Its former tap menu has been replaced with the shared hold door.
+- New scripts are registered in `index.html`/`main.js` and precached in `sw.js`, now **tcm-v13**, with the Memory background and shared name/praise recordings. Existing Phaser CDN/icon references were left unchanged.
+- Verification: `node --test tests/memory-rules.test.js tests/speech.test.js`; browser checks in `tests/merge-smoke.py` and `tests/cache-check.py` use Python Playwright and a test-only exact Phaser 3.60.0 bundle. Real-phone touch/voice testing remains necessary.
+- The `preschooler-game` sibling was read as a source reference and must remain unchanged. Later imports (Listen & Tap, Odd One Out, Patterns) are not in this merge.
+
 ## Project
 
 **"Take Care of Me"** — a touch-based vocabulary game for 3-year-olds. The child picks a character (Dolly, Giraffe, or Bunny) and takes care of them by dragging the correct item to satisfy each request. The game is complete and fully playable.
@@ -110,7 +130,7 @@ Open on a phone or phone-emulator in the browser. Desktop works for development 
 
 **Door button (hold-to-exit):** Small semi-transparent door icon in the top-right corner. Hold for 2 seconds — a subtle arc draws during the hold. On completion, clears the saved character from `localStorage` and goes straight to SelectScene. PlayScene has its own copy; the **Catch, Tidy and MiniGameSelect** scenes call the shared `addDoorButton(this)` from `scenes/doorButton.js`. **CarScene is the exception** — its top-right door **taps to open an exit menu** (Main Game / Mini-Game Select / Character Select) rather than hold-to-exit, since the car has more places to return to.
 
-**Responsive layout:** All element positions and sizes derived from `this.scale.width` / `this.scale.height`. Never hard-coded pixels for layout. `Scale.FIT` mode scales the whole canvas uniformly.
+**Screen target:** phone **portrait** is the priority — 720 × 1280 reference resolution with `Scale.FIT`, which scales the whole canvas uniformly. Derive layout from `this.scale.width` / `this.scale.height` (the Car mini-game swaps to 1280 × 720 landscape, so read those at runtime rather than assuming portrait).
 
 ## Mini-games
 

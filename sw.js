@@ -1,8 +1,25 @@
-const CACHE_NAME = 'tcm-v10';
+const CACHE_NAME = 'tcm-v13';
 
 const ASSETS = [
     './',
     './main.js',
+    './data/memory.js',
+    './data/allgames.js',
+    './scenes/speech.js',
+    './scenes/muteButton.js',
+    './scenes/characterSwitcher.js',
+    './scenes/memoryArt.js',
+    './scenes/MemoryScene.js',
+    './scenes/AllGamesScene.js',
+    './assets/images/bg_memory.webp',
+    './assets/images/all_games_icon.webp',
+    './assets/images/toy_box_closed.png',
+    './assets/audio/item_name_ball.mp3',
+    './assets/audio/item_name_book.mp3',
+    './assets/audio/item_name_blocks.mp3',
+    './assets/audio/item_name_car.mp3',
+    './assets/audio/item_name_teddy.mp3',
+    './assets/audio/well_done_1.mp3',
     './data/items.js',
     './data/characters.js',
     './data/phrases.js',

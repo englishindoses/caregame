@@ -2,7 +2,44 @@
 
 History of decisions and plan changes. Short entries: what changed and why.
 
+## 2026-10-14 - Mute on every screen and three-set Memory breaks
+
+Added one shared speaker/mute button to every scene, including Home and loading, using the saved `tcm_mute` preference. It silences existing recorded sounds and browser speech immediately while preserving callbacks needed to continue play. Synth effects now connect through Phaser's master mute output. Mute taps do not dismiss Tidy's name reveal.
+
+Memory mini mode now completes three sets at fixed level 3 before its sleepy ending and return to care. It never changes saved full-game progression. The existing Tidy menu tile is confirmed to use `toy_box_closed.png`; that image and the new mute helper are included in the `tcm-v13` precache.
+
 ---
+
+## 2026-10-14 - Clearer All Games button
+
+Replaced Home's small Memory-card symbol with a generated transparent illustration of a ball, a chunky puzzle piece and building blocks, matching the existing Plushie Friends artwork. Saved close to its display size as `all_games_icon.webp` (256 x 213). Enlarged the button and picture, added rounded sage-and-cream styling, a raised base, an arrow and gentle press feedback. The full button remains tappable.
+
+The new image loads in SelectScene and is precached for offline use; service-worker version is `tcm-v12`. Phone/laptop checks cover picture readability and tapping the picture, label and arrow. Prompt details are in `all-games-button.md`.
+
+---
+
+## 2026-10-14 - Memory mini fixed at level 3 and praise variety
+
+Memory mini mode now always uses level 3: four cards face down, with no opening preview, regardless of the full game's saved level. It still plays one set and never changes full-game progression. Full Memory's ladder is unchanged.
+
+Memory match and set praise now alternate the existing `well_done_1` ("Well done!") and `thank_you_5` ("You're the best!") recordings. Both lines are used in each completed mini set.
+
+---
+
+## 2026-10-14 - Memory/Pairs, All Games and shared navigation
+
+Added `MemoryScene` with the source project's guided introduction, memory ladder, preview, peek hints, matching celebration and collected-pairs strip, adapted to portrait and the existing Plushie Friends assets. Full mode continues across sets and saves its level. Mini mode starts at the full game's saved level, plays exactly one set and returns to care without changing progression.
+
+Added Home's All Games button and `AllGamesScene` (Memory only). Boot now opens Home as planned. Every non-Home screen uses the shared two-second hold door and destination menu; saved character choice is retained. Extracted the care game's character switcher for other plushie scenes. New audio uses British browser voices as placeholders for complete lines, with recorded existing names/praise used where available and callbacks guarded against missing voice/scene exits.
+
+The care game's existing two-tray break, deck, requests, rewards and hints were preserved. Drive remains portrait with its existing controls and 60-second automatic ending. The preschooler-game source folder was not modified.
+
+Generated a 720 x 1280 warm play-mat background using the bedroom as a style reference (`assets/images/bg_memory.webp`; prompt in `memory-background.md`). Menus reuse existing art; Memory tile and card backs are drawn in code. Added all new runtime scripts/background/shared recordings to the service-worker precache and bumped it to `tcm-v11`.
+
+Validation: syntax checks, eight progression/speech tests, and Chromium checks at phone and laptop sizes. Browser checks cover guided matching, previews, mismatch flip-back, automatic peek, mini modes at all four levels, shared doors across seven screens, character switching, the care game's two-tray break and local offline additions. Real-phone touch and browser voice quality still need user testing.
+
+---
+
 
 ## 2026-07-04 — Little Driver (car) mini-game + per-scene asset loading
 
