@@ -64,7 +64,7 @@ class MiniGameSelectScene extends Phaser.Scene {
         const charKey = `${this.characterId}_happy`;
         if (this.textures.exists(charKey)) {
             const cx = W * 0.20;
-            const cy = H * 0.82;
+            const cy = H * 0.90;
             const sprite = this.add.image(cx, cy, charKey);
             this.charSprite = sprite;
             const maxDim = Math.min(W * 0.32, H * 0.22);
@@ -99,22 +99,14 @@ class MiniGameSelectScene extends Phaser.Scene {
     buildTiles() {
         const { W, H } = this;
         const n    = MINIGAMES.length;
-        const TILE = Math.min(W * 0.42, H * 0.26);
+        const TILE = Math.min(W * 0.35, H * 0.21);
         const cols = n <= 1 ? 1 : 2;
-        const rows = Math.ceil(n / cols);
-        const gapX = W * 0.10;
-        const gapY = H * 0.06;
-        const gridW = cols * TILE + (cols - 1) * gapX;
-        const startX = W / 2 - gridW / 2 + TILE / 2;
-        const gridH = rows * TILE + (rows - 1) * gapY;
-        const centreY = H * 0.42;
-        const startY = centreY - gridH / 2 + TILE / 2;
 
         MINIGAMES.forEach((game, i) => {
             const col = i % cols;
             const row = Math.floor(i / cols);
-            const x   = startX + col * (TILE + gapX);
-            const y   = startY + row * (TILE + gapY);
+            const x   = cols === 1 ? W / 2 : W * (col ? 0.75 : 0.25);
+            const y   = H * 0.35 + row * H * 0.28;
             this.makeTile(game, x, y, TILE);
         });
     }
@@ -125,7 +117,7 @@ class MiniGameSelectScene extends Phaser.Scene {
         let target, baseScale;
         if (this.textures.exists(game.image)) {
             target = this.add.image(x, y, game.image).setDepth(6);
-            baseScale = (TILE * 0.85 * (game.tileScale || 1)) / Math.max(target.width, target.height);
+            baseScale = (TILE * Math.min(1, 0.95 * (game.tileScale || 1))) / Math.max(target.width, target.height);
             target.setScale(baseScale);
         } else {
             // Placeholder coloured box until the real tile art exists.
@@ -140,6 +132,10 @@ class MiniGameSelectScene extends Phaser.Scene {
                 strokeThickness: 5,
             }).setOrigin(0.5).setDepth(7);
         }
+        this.add.text(x, y + TILE * 0.70, game.name, {
+            fontFamily: 'Quicksand, Arial, sans-serif', fontSize: `${this.W * 0.060}px`,
+            color: '#ffffff', stroke: '#5a3a2a', strokeThickness: 5,
+        }).setOrigin(0.5).setDepth(7);
         target.setInteractive({ useHandCursor: true });
 
         // Gentle idle pulse so the tile invites a tap.
@@ -159,7 +155,7 @@ class MiniGameSelectScene extends Phaser.Scene {
             target.setScale(baseScale);
             this.tweens.add({
                 targets:  target,
-                scale:    baseScale * 1.2,
+                scale:    baseScale * 1.12,
                 duration: 150,
                 yoyo:     true,
                 ease:     'Back.easeOut',

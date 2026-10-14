@@ -9,6 +9,7 @@ class CatchScene extends Phaser.Scene {
     }
 
     init(data) {
+        this.mode = data.mode === 'full' ? 'full' : 'mini';
         this.characterId = data.characterId || localStorage.getItem('tcm_character') || 'dolly';
         this.sound.mute  = localStorage.getItem('tcm_mute') === '1';
     }
@@ -222,7 +223,7 @@ class CatchScene extends Phaser.Scene {
         this.setCharEmotion('jumping');
         this.pulse(this.charSprite);
 
-        if (this.catchCount >= this.TARGET_CATCHES) {
+        if (this.mode === 'mini' && this.catchCount >= this.TARGET_CATCHES) {
             this.endGame();
             return;
         }

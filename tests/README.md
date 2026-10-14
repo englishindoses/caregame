@@ -30,3 +30,12 @@ The cache check validates local precache paths and new resources, then opens Hom
 Screenshots/logs go in ignored `tests/artifacts/`. Browser instrumentation exists only in the test context; no production dev hooks are exposed. Real-phone drag/touch feel and the quality/availability of the device's British voice need a device playtest.
 
 `mute-memory-smoke.py` starts its own temporary local server and checks saved mute across screens/reloads, the closed Tidy tile, three level-3 Memory mini sets, recorded praise variety and unchanged full-game progress.
+
+Full-game checks (starts its own server):
+
+```powershell
+python tests/full-games-smoke.py
+python tests/full-games-smoke.py --laptop
+```
+
+Checks all three menu launches, continued Catch, two repeated Tidy batches, unlimited Drive, shared door returns and resetting to mini mode.

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tcm-v13';
+const CACHE_NAME = 'tcm-v14';
 
 const ASSETS = [
     './',
@@ -14,6 +14,15 @@ const ASSETS = [
     './assets/images/bg_memory.webp',
     './assets/images/all_games_icon.webp',
     './assets/images/toy_box_closed.png',
+    './assets/images/toy_box_open.png',
+    './assets/audio/boing_1.mp3',
+    './assets/audio/boing_2.mp3',
+    './assets/audio/tidy_chosen_1.mp3',
+    './assets/audio/tidy_chosen_2.mp3',
+    './assets/audio/tidy_chosen_3.mp3',
+    './assets/audio/in_it_goes_1.mp3',
+    './assets/audio/in_it_goes_2.mp3',
+    './assets/audio/next_one_1.mp3',
     './assets/audio/item_name_ball.mp3',
     './assets/audio/item_name_book.mp3',
     './assets/audio/item_name_blocks.mp3',

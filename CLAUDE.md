@@ -2,6 +2,14 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Full versions of existing games (2026-10-14)
+
+- All Games now offers Memory, Catch, Tidy and Drive, each launched with `mode: 'full'`.
+- Full Catch continues beyond five returns. Full Drive has no automatic ending. Full Tidy celebrates each cleared batch, then restarts with five toys and the current plushie.
+- Opening these games without full mode preserves their existing short care-break behaviour. Shared doors remain the way to leave full games.
+- All Games loads its closed toy-box tile on demand. Existing Tidy box art, recorded Tidy lines and Catch bounce effects are now precached; cache name is `tcm-v14`.
+- Further game imports are paused at the user's request. Real-phone playtesting remains pending.
+
 ## Current implementation after the Memory merge (2026-10-14)
 
 This section reflects the current code and supersedes older descriptions below where they differ.

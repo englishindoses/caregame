@@ -6,6 +6,12 @@ class AllGamesScene extends Phaser.Scene {
         this.sound.mute = localStorage.getItem('tcm_mute') === '1';
     }
 
+    preload() {
+        ALL_GAMES.forEach(game => {
+            if (game.imageSrc && !this.textures.exists(game.image)) this.load.image(game.image, game.imageSrc);
+        });
+    }
+
     create() {
         addMuteButton(this);
         const W = this.scale.width, H = this.scale.height;
@@ -16,21 +22,22 @@ class AllGamesScene extends Phaser.Scene {
             fontFamily: 'Arial, sans-serif', fontSize: `${W * 0.089}px`, color: '#ffffff',
             stroke: '#000000', strokeThickness: 8, align: 'center', wordWrap: { width: W - 80 },
         }).setOrigin(0.5);
-        this.charSprite = this.add.image(W * 0.20, H * 0.82, `${this.characterId}_happy`);
+        this.charSprite = this.add.image(W * 0.20, H * 0.90, `${this.characterId}_happy`);
         this.resizeCharacter();
-        this.tweens.add({ targets: this.charSprite, y: H * 0.82 - 12, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+        this.tweens.add({ targets: this.charSprite, y: H * 0.90 - 12, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
         addCharacterSwitcher(this, () => { this.charSprite.setTexture(`${this.characterId}_happy`); this.resizeCharacter(); });
         addDoorButton(this);
         makeMemoryTileTexture(this);
         const cols = ALL_GAMES.length === 1 ? 1 : 2;
-        const size = Math.min(W * 0.42, H * 0.26);
+        const size = Math.min(W * 0.35, H * 0.21);
         ALL_GAMES.forEach((game, i) => {
             const x = cols === 1 ? W / 2 : W * (i % 2 ? 0.75 : 0.25);
-            const y = H * 0.42 + Math.floor(i / cols) * (size + H * 0.06);
-            const tile = this.add.image(x, y, game.image).setDisplaySize(size, size).setInteractive({ useHandCursor: true });
+            const y = H * 0.35 + Math.floor(i / cols) * H * 0.28;
+            const tile = this.add.image(x, y, game.image).setInteractive({ useHandCursor: true });
+            tile.setScale(size / Math.max(tile.width, tile.height));
             const base = tile.scaleX;
-            this.add.text(x, y + size * 0.48, game.name, {
-                fontFamily: 'Quicksand, Arial, sans-serif', fontSize: `${W * 0.067}px`, color: '#ffffff', stroke: '#5a3a2a', strokeThickness: 5,
+            this.add.text(x, y + size * 0.70, game.name, {
+                fontFamily: 'Quicksand, Arial, sans-serif', fontSize: `${W * 0.060}px`, color: '#ffffff', stroke: '#5a3a2a', strokeThickness: 5,
             }).setOrigin(0.5);
             this.tweens.add({ targets: tile, scale: base * 1.05, duration: 1500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
             tile.on('pointerdown', () => {

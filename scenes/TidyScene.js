@@ -10,6 +10,7 @@ class TidyScene extends Phaser.Scene {
     }
 
     init(data) {
+        this.mode = data.mode === 'full' ? 'full' : 'mini';
         this.characterId = data.characterId || localStorage.getItem('tcm_character') || 'dolly';
         this.sound.mute  = localStorage.getItem('tcm_mute') === '1';
     }
@@ -552,7 +553,13 @@ class TidyScene extends Phaser.Scene {
         const key = pool.length ? Phaser.Utils.Array.GetRandom(pool) : null;
         this.playVoiceThen(
             key,
-            () => this.scene.start('PlayScene', { characterId: this.characterId, fromMinigame: true }),
+            () => {
+                if (this.mode === 'full') {
+                    this.scene.restart({ characterId: this.characterId, mode: 'full' });
+                } else {
+                    this.scene.start('PlayScene', { characterId: this.characterId, fromMinigame: true });
+                }
+            },
             1600
         );
     }

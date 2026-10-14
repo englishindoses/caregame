@@ -16,6 +16,10 @@ Each game is **rebuilt** in Plushie Friends' style, not copied file-for-file, be
 
 The game rules and logic carry over almost unchanged. The layout, look, mascot and audio are reworked to fit Plushie Friends.
 
+## Current scope (2026-10-14)
+
+Further imports are paused. All Games offers full Memory, Catch, Tidy and Drive. Catch and Drive continue until the door is used; Tidy celebrates and starts another five-toy batch. Their care-break versions retain the existing endings. The later imports below are historical plans, not active work.
+
 ## Order of games
 
 1. **Memory / Pairs** — first, fully planned below.

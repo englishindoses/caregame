@@ -1,3 +1,11 @@
+## 2026-10-14 - Selection screen spacing and artwork
+
+Both game menus use the name Tidy Time and show Memory as two sage-and-cream heart card backs. The four-tile grids reserve space for labels, header controls, animated press feedback and the plushie below the grid. Phone and laptop layout checks include animation bounds.
+
+## 2026-10-14 - Full Catch, Tidy and Drive
+
+All Games now offers all four existing games in a two-column picture grid. Full Catch has no catch limit; full Drive has no time limit; full Tidy celebrates each batch and starts another with the selected plushie. Default mini modes keep their original care-game returns. All Games loads its Tidy tile directly, image proportions are preserved, and the games' existing media is precached in `tcm-v14`. Further imports are paused.
+
 # Changelog
 
 History of decisions and plan changes. Short entries: what changed and why.

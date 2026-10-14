@@ -16,6 +16,7 @@ class CarScene extends Phaser.Scene {
     }
 
     init(data) {
+        this.mode = data.mode === 'full' ? 'full' : 'mini';
         this.characterId = data.characterId || localStorage.getItem('tcm_character') || 'dolly';
         this.sound.mute  = localStorage.getItem('tcm_mute') === '1';
     }
@@ -78,13 +79,15 @@ class CarScene extends Phaser.Scene {
 
         // Auto-return to the main game after a set play time (parent will tune
         // this after testing). Manual exit via the door menu still works too.
-        this._autoEnd = this.time.delayedCall(CAR_CONFIG.AUTO_END_MS, () => this.autoEnd());
+        this._autoEnd = this.mode === 'mini'
+            ? this.time.delayedCall(CAR_CONFIG.AUTO_END_MS, () => this.autoEnd()) : null;
 
         // Cleanly undo the landscape flip and stop loops on the way out.
         this.events.once('shutdown', () => this.teardown());
     }
 
     autoEnd() {
+        if (this.mode === 'full') return;
         this.scene.start('PlayScene', { characterId: this.characterId, fromMinigame: true });
     }
 

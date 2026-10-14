@@ -12,7 +12,7 @@ const MINIGAMES = [
     },
     {
         id:          'tidy',
-        name:        'Tidy',
+        name:        'Tidy Time',
         image:       'toy_box_closed',
         imageSrc:    'assets/images/toy_box_closed.png',  // not a main-game asset — select screen loads it
         tileScale:   1.4,           // draw the box tile bigger than the default
