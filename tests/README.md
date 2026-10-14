@@ -48,4 +48,8 @@ python tests/home-settings-smoke.py
 python tests/home-settings-smoke.py --laptop
 ```
 
-Checks direct activity launches, label tap targets, saved plushie selection, short/cancelled/two-second settings holds, blocked taps behind settings, independent recorded request/thanks categories after playback begins, volume, synth gating, simplified doors and reload persistence. `cache-check.py` also starts its own server.
+Checks direct activity launches, label tap targets, saved plushie selection, short/cancelled/two-second settings holds, blocked taps behind settings, independent recorded request/thanks categories after playback begins, volume, synth gating, one-tap full/mini exits and reload persistence. `cache-check.py` also starts its own server.
+
+Home checks also verify the toy-shelf cubby image/label bounds, selected foreground plushie and direct one-tap Care Game exit without a destination menu.
+
+The updated settings checks drag the volume slider, verify inline selected On/Off options, and tap the illustrated door to return full games Home and mini games to Care Game. Parent settings still require a hold.

@@ -33,13 +33,11 @@ def click(page, x, y):
     box = page.locator('canvas').first.bounding_box()
     page.mouse.click(box['x'] + x * box['width'] / 720, box['y'] + y * box['height'] / 1280)
 
-def hold_door(page):
-    box = page.locator('canvas').first.bounding_box()
-    page.mouse.move(box['x'] + 670 * box['width'] / 720, box['y'] + 50 * box['height'] / 1280)
-    page.mouse.down()
-    page.wait_for_timeout(2200)
-    page.mouse.up()
-    page.wait_for_function('() => __testGame.scene.getScenes(true)[0]._navigationOpen === true')
+def exit_game(page, destination):
+    page.wait_for_function('()=>__testGame.scene.getScenes(true)[0].input._list.some(o=>o.depth===81)')
+    click(page, 670, 60)
+    active(page, destination)
+
 
 def solve(page):
     state = memory(page)
@@ -132,37 +130,17 @@ with sync_playwright() as p:
     assert page.evaluate("localStorage.getItem('tcm_memory_level')") == '3'
     print('PASS: full mode persists promotion and step-down at set completion', flush=True)
 
-    # Shared door: short hold cancels; every scene routes and keeps the plushie.
+    # Child-accessible doors: full games go Home, mini games go to care.
     for scene_name in ['PlayScene','MiniGameSelectScene','CatchScene','TidyScene','CarScene','MemoryScene']:
         start(page, scene_name, {'characterId':'bunny','mode':'full'})
-        hold_door(page)
-        labels = page.evaluate('() => __testGame.scene.getScenes(true)[0].children.list.filter(o=>o.type==="Container" && o.depth===200).flatMap(o=>o.list.filter(x=>x.type==="Text").map(x=>x.text))')
-        assert 'Where to?' in labels
-        assert ('Back to Care Game' in labels) == (scene_name != 'PlayScene')
-        assert 'Back to Games Menu' not in labels
-        assert 'Back to Home' in labels
-        page.screenshot(path=str(ARTIFACTS / ('door-' + scene_name + '.png')))
-        # Outside click closes and restores paused timers/physics.
-        click(page, 360, 1200)
-        assert page.evaluate('() => !__testGame.scene.getScenes(true)[0]._navigationOpen')
-        assert page.evaluate('() => !__testGame.scene.getScenes(true)[0].time.paused')
-        hold_door(page)
-        home = page.evaluate('() => { const menu=__testGame.scene.getScenes(true)[0].children.list.find(o=>o.type==="Container" && o.depth===200); const text=menu.list.find(o=>o.text==="Back to Home"); return {x:text.x,y:text.y}; }')
-        click(page, home['x'], home['y'])
-        active(page, 'SelectScene')
+        destination = 'PlayScene' if scene_name == 'MiniGameSelectScene' else 'SelectScene'
+        exit_game(page, destination)
         assert page.evaluate("localStorage.getItem('tcm_character')") == 'bunny'
-    print('PASS: all six doors, destination filtering, dismissal and Home return', flush=True)
-
-    start(page, 'MemoryScene', {'mode':'full','characterId':'bunny'})
-    click(page, 670, 50)
-    page.wait_for_timeout(400)
-    assert not page.evaluate('() => __testGame.scene.getScene("MemoryScene")._navigationOpen')
-    for label, destination in [('Back to Home','SelectScene'), ('Back to Care Game','PlayScene')]:
-        start(page, 'MemoryScene', {'mode':'full','characterId':'bunny'})
-        hold_door(page)
-        button = page.evaluate('(label) => { const menu=__testGame.scene.getScenes(true)[0].children.list.find(o=>o.type==="Container" && o.depth===200); const text=menu.list.find(o=>o.text===label); return {x:text.x,y:text.y}; }', label)
-        click(page, button['x'], button['y']); active(page, destination)
-    print('PASS: short door presses do nothing; Home and Care destinations work', flush=True)
+        assert not page.evaluate('()=>__testGame.scene.getScenes(true)[0].children.list.some(o=>o.depth===200)')
+    for scene_name in ['CatchScene','TidyScene','CarScene','MemoryScene']:
+        start(page, scene_name, {'characterId':'bunny','mode':'mini'})
+        exit_game(page, 'PlayScene')
+    print('PASS: one-tap full/mini exits and saved plushie',flush=True)
 
     # Care retains three choices and its two-tray break.
     start(page, 'PlayScene', {'characterId':'bunny'})

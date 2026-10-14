@@ -19,7 +19,7 @@ assert all(not asset or (ROOT / asset).is_file() for asset in assets), 'Precache
 assert len(assets) == len(set(assets)), 'Duplicate precache entries'
 scripts = re.findall(r'<script src="([^":]+\.js)"', (ROOT / 'index.html').read_text(encoding='utf-8'))
 assert all(script in assets for script in scripts), 'A runtime script is missing from precache'
-expected = ['assets/images/bg_memory.webp', 'assets/images/all_games_icon.webp', 'assets/images/toy_box_closed.png', 'data/memory.js', 'data/allgames.js',
+expected = ['assets/images/exit_door.png', 'assets/images/bg_memory.webp', 'assets/images/all_games_icon.webp', 'assets/images/toy_box_closed.png', 'data/memory.js', 'data/allgames.js',
             'scenes/MemoryScene.js', 'scenes/AllGamesScene.js', 'scenes/doorButton.js',
             'scenes/soundSettings.js', 'scenes/speech.js', 'scenes/muteButton.js', 'scenes/characterSwitcher.js', 'scenes/memoryArt.js',
             'assets/audio/well_done_1.mp3', 'assets/audio/item_name_ball.mp3']
@@ -53,7 +53,7 @@ with sync_playwright() as p:
     page.goto('http://127.0.0.1:' + str(server.server_port) + '/')
     page.wait_for_function('() => window.__testGame?.scene.isActive("SelectScene")')
     page.evaluate('() => navigator.serviceWorker.ready')
-    page.evaluate('async ([cdn, bundle]) => { const cache = await caches.open("tcm-v15"); await cache.put(cdn, new Response(bundle, {headers:{"Content-Type":"application/javascript"}})); }', [cdn, bundle])
+    page.evaluate('async ([cdn, bundle]) => { const cache = await caches.open("tcm-v17"); await cache.put(cdn, new Response(bundle, {headers:{"Content-Type":"application/javascript"}})); }', [cdn, bundle])
     for asset in expected:
         assert page.evaluate('async asset => !!(await caches.match(new URL(asset,location.href)))', asset), asset
     # All local offline requests must be served by the worker, not HTTP routes.

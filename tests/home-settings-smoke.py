@@ -37,7 +37,7 @@ try:
         def start(name, data=None):
             page.evaluate('([name,data]) => __testGame.scene.getScenes(true)[0].scene.start(name,data)', [name, data or {'characterId':'dolly'}])
             page.wait_for_function('(name) => __testGame.scene.isActive(name)', arg=name)
-            page.wait_for_function('() => __testGame.scene.getScenes(true)[0].children.list.some(o=>o.type==="Zone" && o.depth===221)')
+            page.wait_for_function('(name) => __testGame.scene.getScene(name).input._list.some(o=>o.type==="Zone" && o.depth===221)',arg=name)
             page.wait_for_timeout(150)
 
         def toggle(expected):
@@ -55,8 +55,17 @@ try:
             page.mouse.down(); page.wait_for_timeout(2200); page.mouse.up()
 
         suffix='laptop' if '--laptop' in sys.argv else 'phone'
-        click(360,1280*.92)
+        friend=page.evaluate('()=>{const h=__testGame.scene.getScene("SelectScene").plushieChoices.find(c=>c.id === "giraffe").hit;return {x:h.x,y:h.y};}')
+        click(friend['x'],friend['y'])
         assert page.evaluate('()=>__testGame.scene.isActive("SelectScene") && localStorage.getItem("tcm_character") === "giraffe"')
+        assert page.evaluate('()=>{const s=__testGame.scene.getScene("SelectScene"),selected=s.plushieChoices.find(c=>c.id === s.characterId).picture;return s.children.list.some(o=>o.text === "Care Game") && s.plushieChoices.filter(c=>c.id !== s.characterId).every(c=>c.picture.displayHeight < selected.displayHeight && c.picture.y+c.picture.displayHeight/2 < selected.y+selected.displayHeight/2);}')
+        layout=page.evaluate('()=>__testGame.scene.getScene("SelectScene").gameTiles.map(({tile,label,hit})=>({image:tile.getBounds(),label:label.getBounds(),cell:hit.getBounds()}))')
+        for row in layout:
+            for part in ['image','label']:
+                box=row[part];cell=row['cell']
+                assert box['x']>=cell['x'] and box['x']+box['width']<=cell['x']+cell['width']
+                assert box['y']>=cell['y'] and box['y']+box['height']<=cell['y']+cell['height']
+            assert row['image']['y']+row['image']['height']<row['label']['y']
         page.screenshot(path=str(ROOT/f'tests/artifacts/home-{suffix}.png'))
         click(670,1280*.055)
         assert not page.evaluate('()=>__testGame.scene.getScene("SelectScene")._settingsOpen')
@@ -70,12 +79,18 @@ try:
         page.wait_for_function('()=>__testGame.scene.getScene("SelectScene")._settingsOpen')
         click(360,1280*.19) # Shield prevents Care starting underneath.
         assert page.evaluate('()=>__testGame.scene.isActive("SelectScene")')
-        for _ in range(4): click(720*.30,1280*.42)
-        click(360,1280*.595)
+        box=page.locator('canvas').first.bounding_box()
+        page.mouse.move(box['x']+612*box['width']/720,box['y']+1280*.432*box['height']/1280)
+        page.mouse.down()
+        page.mouse.move(box['x']+720*.57*box['width']/720,box['y']+1280*.432*box['height']/1280,steps=8)
+        page.wait_for_timeout(150);page.mouse.up()
+        click(720*.825,1280*.52)
+        click(720*.825,1280*.52) # Selecting Off twice must keep it off.
         assert page.evaluate('()=>localStorage.getItem("tcm_request_sound") === "0" && readSoundSettings().other')
+        assert page.evaluate('()=>{const panel=__testGame.scene.getScene("SelectScene").children.list.find(o=>o.depth === 300),row=panel.list.filter(o=>o.type === "Text" && Math.abs(o.y-1280*.52)<1);return row.find(o=>o.text === "Off").style.color === "#FFF8EC" && row.find(o=>o.text === "On").style.color === "#64513D" && row.some(o=>o.text === "Dolly request sound");}')
         assert abs(page.evaluate('()=>__testGame.sound.volume')-.6)<.001
         page.screenshot(path=str(ROOT/f'tests/artifacts/settings-{suffix}.png'))
-        click(360,1280*.82)
+        click(360,1280*.72)
         click(720*.57,1280*.19)
         page.wait_for_function('()=>__testGame.scene.isActive("PlayScene")')
         page.wait_for_function('()=>__testGame.scene.getScene("PlayScene").currentRequest !== null',timeout=20000)
@@ -84,20 +99,21 @@ try:
         result = page.evaluate('()=>{const s=__testGame.sound;const request=s.add("request_ball"),thanks=s.add("thank_you_1");request.play();thanks.play();const result={request:request.mute,thanks:thanks.mute,volume:s.volume};request.destroy();thanks.destroy();return result;}')
         assert result['request'] and not result['thanks'] and abs(result['volume']-.6)<.001, result
         page.wait_for_function('()=>!__testGame.scene.getScene("PlayScene")._inputLocked',timeout=20000)
-        hold(670,50)
-        labels=page.evaluate('()=>__testGame.scene.getScenes(true)[0].children.list.flatMap(o=>o.list||[o]).filter(o=>o.text?.startsWith("Back to")).map(o=>({text:o.text,x:o.x,y:o.y}))')
-        assert [l['text'] for l in labels] == ['Back to Home']
-        click(labels[0]['x'],labels[0]['y'])
+        assert page.evaluate('()=>{const door=__testGame.scene.getScene("PlayScene").children.list.find(o=>o.texture?.key === "exit_door"),bounds=door.getBounds();return bounds.y>0 && bounds.x+bounds.width<720 && door.displayHeight>=80 && door.displayHeight<=97;}')
+        page.screenshot(path=str(ROOT/f'tests/artifacts/door-{suffix}.png'))
+        click(670,60)
         page.wait_for_function('()=>__testGame.scene.isActive("SelectScene")')
+        assert page.evaluate('()=>!__testGame.scene.getScene("SelectScene").children.list.some(o=>o.depth === 200)')
+        assert page.evaluate('()=>__testGame.scene.getScene("SelectScene").characterId === "giraffe"')
         hold(670,1280*.055)
-        click(360,1280*.595) # Requests on.
-        click(360,1280*.735) # Other sounds off.
-        click(360,1280*.82)
+        click(720*.665,1280*.52) # Requests on.
+        click(720*.825,1280*.61) # Other sounds off.
+        click(360,1280*.72)
         assert page.evaluate('()=>readSoundSettings().requests && !readSoundSettings().other')
         # Every activity launches by tapping its label, with the selected plushie.
         for i,name in enumerate(['MemoryScene','CatchScene','TidyScene','CarScene']):
-            x=720*(.75 if i%2 else .25);y=1280*(.40+(i//2)*.25)+216*.70
-            click(x,y)
+            point=page.evaluate('(i)=>{const label=__testGame.scene.getScene("SelectScene").gameTiles[i].label;return {x:label.x,y:label.y};}',i)
+            click(point['x'],point['y'])
             page.wait_for_function('(name)=>__testGame.scene.isActive(name)',arg=name,timeout=20000)
             page.wait_for_function('(name)=>__testGame.scene.getScene(name).children.list.some(o=>o.type === "Zone" && o.depth === 221)',arg=name)
             assert page.evaluate('(name)=>{const s=__testGame.scene.getScene(name);return s.mode === "full" && s.characterId === "giraffe";}',name)
@@ -105,16 +121,23 @@ try:
             if name != 'MemoryScene':
                 assert page.evaluate('(name)=>otherSoundDestination(__testGame.scene.getScene(name)).gain.value === 0',name)
             print('PASS: launched',name,flush=True)
-            hold(670,50)
-            labels=page.evaluate('()=>__testGame.scene.getScenes(true)[0].children.list.flatMap(o=>o.list||[o]).filter(o=>o.text?.startsWith("Back to")).map(o=>({text:o.text,x:o.x,y:o.y}))')
-            assert [l['text'] for l in labels] == ['Back to Care Game','Back to Home']
-            point=labels[-1];click(point['x'],point['y'])
+            click(670,60)
             page.wait_for_function('()=>__testGame.scene.isActive("SelectScene")')
         start('MiniGameSelectScene', {'characterId':'giraffe'})
         assert page.evaluate('()=>MINIGAMES.map(g=>g.id).join(",")') == 'memory,catch,tidy,car'
         click(180,1280*.35+252*.70)
         page.wait_for_function('()=>__testGame.scene.isActive("MemoryScene")', timeout=20000)
         assert page.evaluate('()=>{const s=__testGame.scene.getScene("MemoryScene");return s.mode === "mini" && s.level === 3;}')
+        page.wait_for_function('()=>__testGame.scene.getScene("MemoryScene").input._list.some(o=>o.depth===81)')
+        click(670,60)
+        page.wait_for_function('()=>__testGame.scene.isActive("PlayScene")')
+        assert page.evaluate('()=>__testGame.scene.getScene("PlayScene").characterId === "giraffe"')
+        # Every mini game and its selection menu return to care on a child tap.
+        for name in ['CatchScene','TidyScene','CarScene','MiniGameSelectScene']:
+            start(name, {'characterId':'giraffe','mode':'mini'})
+            click(670,60)
+            page.wait_for_function('()=>__testGame.scene.isActive("PlayScene")')
+            print('PASS: mini exit',name,flush=True)
         start('SelectScene', {'characterId':'giraffe'})
         toggle(True);toggle(False)
         assert page.evaluate('()=>readSoundSettings().requests && !readSoundSettings().other')
@@ -123,7 +146,7 @@ try:
         assert page.evaluate('()=>readSoundSettings().volume === .6 && readSoundSettings().requests && !readSoundSettings().other')
         assert page.evaluate('()=>__testGame.scene.getScene("SelectScene").characterId === "giraffe"')
         assert not errors,errors
-        print('PASS:',suffix,'Home launches, plushie choice, settings hold/cancel/shield, volume, independent categories after play(), synth gating, simplified doors and reload persistence',flush=True)
+        print('PASS:',suffix,'Home launches, plushie choice, settings hold/cancel/shield, volume, independent categories after play(), synth gating, one-tap full/mini exits and reload persistence',flush=True)
         browser.close()
 except Exception:
     try:

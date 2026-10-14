@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tcm-v15';
+const CACHE_NAME = 'tcm-v17';
 
 const ASSETS = [
     './',
@@ -14,6 +14,7 @@ const ASSETS = [
     './scenes/AllGamesScene.js',
     './assets/images/bg_memory.webp',
     './assets/images/all_games_icon.webp',
+    './assets/images/exit_door.png',
     './assets/images/toy_box_closed.png',
     './assets/images/toy_box_open.png',
     './assets/audio/boing_1.mp3',

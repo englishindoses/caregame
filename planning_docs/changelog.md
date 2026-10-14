@@ -1,3 +1,9 @@
+## 2026-10-14 - Toy-shelf Home, parent controls and child-friendly exits
+
+Home has a quiet cream wall and wooden four-cubby organiser shelf, with a wide Care Game panel. Two waiting plushies sit on a lower shelf, while the selected plushie appears larger in front; selecting another swaps their positions. Whole cubbies remain tappable.
+
+Parent settings retain the two-second hold and now use balanced padding, rounded buttons, a draggable volume slider and inline On/Off options with a clear selected state. Children tap a generated door picture to exit directly: full games return Home, mini games return to Care Game, and Care Game returns Home. No exit hold or destination menu remains. The transparent door image is loaded in Boot and precached in tcm-v17.
+
 ## 2026-10-14 - Home activity hub and parent settings
 
 Home now offers Care and the four full games directly, with separate saved plushie selection. The old All Games screen redirects to Home. Shared doors offer Home and Care; care breaks retain their short games. Both selection grids use the same game order and generous picture-plus-label tap targets.

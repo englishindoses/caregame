@@ -1,3 +1,11 @@
+## Toy-shelf Home (2026-10-14)
+
+- Home uses a code-drawn warm cream background, a rounded Care Game panel and a wooden 2-by-2 organiser shelf. Each whole cubby opens its full game; no new image asset or runtime dependency is needed.
+- The two unselected plushies sit on a small lower shelf. The selected plushie appears larger in front, ready to play. Tapping a waiting plushie swaps positions and saves it without launching a game.
+- Children tap the illustrated door to exit directly: full games and Care Game return to Home; mini games and their selection screen return to Care Game. No destination menu or exit hold remains. Only parent settings require the two-second hold.
+- Parent settings use an evenly padded rounded panel, a draggable 0-100% volume slider and inline On/Off pills. The selected choice is dark green with light text. Preferences are unchanged.
+- `assets/images/exit_door.png` is a transparent 91 x 128 generated door, loaded in Boot and precached in `tcm-v17`. Prompt and production details are in `planning_docs/exit-door.md`. Phone/laptop checks cover shelf bounds, plushie selection, slider drag, sound choices and one-tap full/mini exits.
+
 ## Home hub and parent sound settings (2026-10-14)
 
 - Home (`SelectScene`) now opens Care, Memory, Catch, Tidy Time and Drive directly. The bottom plushie selector changes the saved character without launching care. Game pictures, labels and their surrounding areas are tappable. Full and mini menus use the same game order.

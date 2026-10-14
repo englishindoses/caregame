@@ -86,49 +86,82 @@ function addParentSettings(scene) {
         scene._settingsOpen = true;
         panel = scene.add.container(0, 0).setDepth(300);
         const shield = scene.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.6).setInteractive();
-        const bg = scene.add.rectangle(W / 2, H / 2, W * 0.92, H * 0.72, 0xFFF8EC);
+        const panelX = W * 0.04, panelY = H * 0.23, panelW = W * 0.92, panelH = H * 0.56;
+        const bg = scene.add.graphics();
+        bg.fillStyle(0xFFF8EC).fillRoundedRect(panelX, panelY, panelW, panelH, W * 0.04);
         panel.add([shield, bg]);
-        const text = (x, y, copy, size = W * 0.048) => {
-            const label = scene.add.text(x, y, copy, { fontFamily: 'Quicksand, Arial', fontSize: `${size}px`, color: '#5a4938', align: 'center' }).setOrigin(0.5);
+        const text = (x, y, copy, size = W * 0.042) => {
+            const label = scene.add.text(x, y, copy, { fontFamily: 'Quicksand, Arial', fontSize: `${size}px`, color: '#64513D' }).setOrigin(0.5);
             panel.add(label);
             return label;
         };
         const button = (x, y, width, copy, action) => {
-            const rect = scene.add.rectangle(x, y, width, H * 0.067, 0xDAE5C6);
-            panel.add(rect);
+            const height = H * 0.066;
+            const background = scene.add.graphics();
+            panel.add(background);
             const label = text(x, y, copy);
-            const zone = scene.add.zone(x, y, width, H * 0.067).setInteractive({ useHandCursor: true });
-            zone.on('pointerdown', (_p, _x, _y, event) => { event.stopPropagation(); action(label); });
+            const zone = scene.add.zone(x, y, width, height).setInteractive({ useHandCursor: true });
+            zone.on('pointerdown', (_p, _x, _y, event) => { event.stopPropagation(); action(); });
             panel.add(zone);
-            return label;
+            const paint = selected => {
+                background.clear();
+                background.fillStyle(selected ? 0x72865B : 0xF8F3E9).fillRoundedRect(x - width / 2, y - height / 2, width, height, height / 2);
+                background.lineStyle(selected ? 3 : 2, selected ? 0x5C7047 : 0xC8BCA9).strokeRoundedRect(x - width / 2, y - height / 2, width, height, height / 2);
+                label.setColor(selected ? '#FFF8EC' : '#64513D');
+            };
+            paint(false);
+            return { label, zone, paint };
         };
-        text(W / 2, H * 0.22, 'Parent settings', W * 0.065);
-        const volume = text(W / 2, H * 0.34, '');
-        const updateVolume = amount => {
-            const value = Math.round(Math.max(0, Math.min(1, readSoundSettings().volume + amount)) * 100) / 100;
+        text(W / 2, H * 0.29, 'Parent settings', W * 0.058);
+        const volume = text(W / 2, H * 0.375, '');
+        const sliderLeft = W * 0.15, sliderWidth = W * 0.70, sliderY = H * 0.432;
+        const track = scene.add.graphics();
+        panel.add(track);
+        const thumb = scene.add.circle(0, sliderY, W * 0.028, 0x72865B).setStrokeStyle(4, 0xFFF8EC);
+        panel.add(thumb);
+        const redrawVolume = () => {
+            const value = readSoundSettings().volume;
+            volume.setText(`Volume: ${Math.round(value * 100)}%`);
+            track.clear();
+            track.fillStyle(0xD8CEBD).fillRoundedRect(sliderLeft, sliderY - 6, sliderWidth, 12, 6);
+            if (value > 0) track.fillStyle(0x9DAF86).fillRoundedRect(sliderLeft, sliderY - 6, sliderWidth * value, 12, 6);
+            thumb.setX(sliderLeft + sliderWidth * value);
+        };
+        const setVolumeFromX = x => {
+            const value = Math.round(Math.max(0, Math.min(1, (x - sliderLeft) / sliderWidth)) * 100) / 100;
             localStorage.setItem('tcm_volume', String(value));
             applySoundSettings(scene);
-            volume.setText(`Volume: ${Math.round(value * 100)}%`);
+            redrawVolume();
         };
-        volume.setText(`Volume: ${Math.round(readSoundSettings().volume * 100)}%`);
-        button(W * 0.30, H * 0.42, W * 0.28, 'Quieter', () => updateVolume(-0.1));
-        button(W * 0.70, H * 0.42, W * 0.28, 'Louder', () => updateVolume(0.1));
-        const toggle = (key, field, title, y) => {
-            text(W / 2, y, title);
-            button(W / 2, y + H * 0.065, W * 0.65, readSoundSettings()[field] ? 'On' : 'Off', label => {
-                const enabled = !readSoundSettings()[field];
+        const sliderHit = scene.add.zone(W / 2, sliderY, sliderWidth + W * 0.06, H * 0.07).setInteractive({ useHandCursor: true });
+        sliderHit.on('pointerdown', (pointer, _x, _y, event) => { event.stopPropagation(); setVolumeFromX(pointer.x); });
+        scene.input.setDraggable(sliderHit);
+        sliderHit.on('drag', pointer => setVolumeFromX(pointer.x));
+        panel.add(sliderHit);
+        redrawVolume();
+        const options = (key, field, title, y) => {
+            text(W * 0.10, y, title, W * 0.037).setOrigin(0, 0.5);
+            const select = enabled => {
                 localStorage.setItem(key, enabled ? '1' : '0');
                 applySoundSettings(scene);
-                label.setText(enabled ? 'On' : 'Off');
-            });
+                redraw();
+            };
+            const on = button(W * 0.665, y, W * 0.14, 'On', () => select(true));
+            const off = button(W * 0.825, y, W * 0.14, 'Off', () => select(false));
+            const redraw = () => {
+                on.paint(readSoundSettings()[field]);
+                off.paint(!readSoundSettings()[field]);
+            };
+            redraw();
         };
-        toggle('tcm_request_sound', 'requests', 'Dolly request sound', H * 0.53);
-        toggle('tcm_other_sound', 'other', 'Other sounds', H * 0.67);
-        button(W / 2, H * 0.82, W * 0.65, 'Done', () => {
+        options('tcm_request_sound', 'requests', 'Dolly request sound', H * 0.52);
+        options('tcm_other_sound', 'other', 'Other sounds', H * 0.61);
+        const done = button(W / 2, H * 0.72, W * 0.65, 'Done', () => {
             panel.destroy(true);
             panel = null;
             scene._settingsOpen = false;
         });
+        done.paint(true);
     };
     hit.on('pointerdown', pointer => {
         if (panel || pointerId !== null) return;

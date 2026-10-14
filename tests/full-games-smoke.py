@@ -37,7 +37,7 @@ try:
         def start(name, data=None):
             page.evaluate('([name,data]) => __testGame.scene.getScenes(true)[0].scene.start(name,data)', [name, data or {'characterId':'dolly'}])
             page.wait_for_function('(name) => __testGame.scene.isActive(name)', arg=name)
-            page.wait_for_function('() => __testGame.scene.getScenes(true)[0].children.list.some(o=>o.type==="Zone" && o.depth===221)')
+            page.wait_for_function('(name) => __testGame.scene.getScene(name).input._list.some(o=>o.type==="Zone" && o.depth===221)',arg=name)
             page.wait_for_timeout(150)
 
         def toggle(expected):
@@ -79,15 +79,8 @@ try:
                 page.evaluate('()=>__testGame.scene.getScene("CarScene").autoEnd()')
                 assert page.evaluate('()=>__testGame.scene.isActive("CarScene")')
             print('PASS: full', game, 'launch and continuous play', flush=True)
-            # Actual two-second door hold and Home button.
-            box=page.locator('canvas').first.bounding_box()
-            page.mouse.move(box['x']+670*box['width']/720,box['y']+64*box['height']/1280)
-            page.mouse.down()
-            page.wait_for_timeout(2200)
-            page.mouse.up()
-            page.wait_for_function('()=>__testGame.scene.getScenes(true)[0]._navigationOpen')
-            point=page.evaluate('()=>{const s=__testGame.scene.getScenes(true)[0];const t=s.children.list.flatMap(o=>o.list || [o]).find(o=>o.text === "Back to Home");return {x:t.x,y:t.y};}')
-            click(point['x'],point['y'])
+            # Full games return directly Home on a child tap.
+            click(670,60)
             page.wait_for_function('()=>__testGame.scene.isActive("SelectScene")')
             start(scene)  # Re-enter without full mode: care-break behaviour resets.
             assert page.evaluate('(name)=>__testGame.scene.getScene(name).mode',scene) == 'mini'
