@@ -20,6 +20,7 @@ class BootScene extends Phaser.Scene {
         const img = key => `assets/images/${key}.${webp.has(key) ? 'webp' : 'png'}`;
 
         this.load.image('bg_room', img('bg_room'));
+        this.load.image('bg_home', 'assets/images/bg_home.webp');
         this.load.image('exit_door', 'assets/images/exit_door.png');
 
         // Each character declares its own emotion set in characters.js (the single

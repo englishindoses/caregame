@@ -59,6 +59,7 @@ try:
         click(friend['x'],friend['y'])
         assert page.evaluate('()=>__testGame.scene.isActive("SelectScene") && localStorage.getItem("tcm_character") === "giraffe"')
         assert page.evaluate('()=>{const s=__testGame.scene.getScene("SelectScene"),selected=s.plushieChoices.find(c=>c.id === s.characterId).picture;return s.children.list.some(o=>o.text === "Care Game") && s.plushieChoices.filter(c=>c.id !== s.characterId).every(c=>c.picture.displayHeight < selected.displayHeight && c.picture.y+c.picture.displayHeight/2 < selected.y+selected.displayHeight/2);}')
+        assert page.evaluate('()=>{const s=__testGame.scene.getScene("SelectScene");return s.plushieChoices.every(c=>c.picture.texture.key === c.id+"_"+(c.id === s.characterId ? "neutral" : "sleeping")) && s.carePicture.texture.key === "giraffe_neutral";}')
         layout=page.evaluate('()=>__testGame.scene.getScene("SelectScene").gameTiles.map(({tile,label,hit})=>({image:tile.getBounds(),label:label.getBounds(),cell:hit.getBounds()}))')
         for row in layout:
             for part in ['image','label']:
@@ -77,7 +78,7 @@ try:
         assert not page.evaluate('()=>__testGame.scene.getScene("SelectScene")._settingsOpen')
         hold(670,1280*.055)
         page.wait_for_function('()=>__testGame.scene.getScene("SelectScene")._settingsOpen')
-        click(360,1280*.19) # Shield prevents Care starting underneath.
+        click(360,1280*.267) # Shield prevents Care starting underneath.
         assert page.evaluate('()=>__testGame.scene.isActive("SelectScene")')
         box=page.locator('canvas').first.bounding_box()
         page.mouse.move(box['x']+612*box['width']/720,box['y']+1280*.432*box['height']/1280)
@@ -91,7 +92,7 @@ try:
         assert abs(page.evaluate('()=>__testGame.sound.volume')-.6)<.001
         page.screenshot(path=str(ROOT/f'tests/artifacts/settings-{suffix}.png'))
         click(360,1280*.72)
-        click(720*.57,1280*.19)
+        click(360,1280*.267)
         page.wait_for_function('()=>__testGame.scene.isActive("PlayScene")')
         page.wait_for_function('()=>__testGame.scene.getScene("PlayScene").currentRequest !== null',timeout=20000)
         assert page.evaluate('()=>__testGame.scene.getScene("PlayScene").characterId') == 'giraffe'

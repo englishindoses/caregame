@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tcm-v17';
+const CACHE_NAME = 'tcm-v18';
 
 const ASSETS = [
     './',
@@ -13,6 +13,7 @@ const ASSETS = [
     './scenes/MemoryScene.js',
     './scenes/AllGamesScene.js',
     './assets/images/bg_memory.webp',
+    './assets/images/bg_home.webp',
     './assets/images/all_games_icon.webp',
     './assets/images/exit_door.png',
     './assets/images/toy_box_closed.png',
