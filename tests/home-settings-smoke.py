@@ -58,8 +58,9 @@ try:
         friend=page.evaluate('()=>{const h=__testGame.scene.getScene("SelectScene").plushieChoices.find(c=>c.id === "giraffe").hit;return {x:h.x,y:h.y};}')
         click(friend['x'],friend['y'])
         assert page.evaluate('()=>__testGame.scene.isActive("SelectScene") && localStorage.getItem("tcm_character") === "giraffe"')
-        assert page.evaluate('()=>{const s=__testGame.scene.getScene("SelectScene"),selected=s.plushieChoices.find(c=>c.id === s.characterId).picture;return s.children.list.some(o=>o.text === "Care Game") && s.plushieChoices.filter(c=>c.id !== s.characterId).every(c=>c.picture.displayHeight < selected.displayHeight && c.picture.y+c.picture.displayHeight/2 < selected.y+selected.displayHeight/2);}')
+        assert page.evaluate('()=>{const s=__testGame.scene.getScene("SelectScene"),selected=s.plushieChoices.find(c=>c.id === s.characterId).picture;return s.children.list.some(o=>o.text === "Care Game") && s.plushieChoices.filter(c=>c.id !== s.characterId).every(c=>c.picture.displayHeight < selected.displayHeight && Math.abs(c.picture.y+c.picture.displayHeight/2 - selected.y-selected.displayHeight/2) < 1);}')
         assert page.evaluate('()=>{const s=__testGame.scene.getScene("SelectScene");return s.plushieChoices.every(c=>c.picture.texture.key === c.id+"_"+(c.id === s.characterId ? "neutral" : "sleeping")) && s.carePicture.texture.key === "giraffe_neutral";}')
+        assert page.evaluate('()=>!__testGame.scene.getScene("SelectScene").children.list.some(o=>o.text === "Choose a friend")')
         layout=page.evaluate('()=>__testGame.scene.getScene("SelectScene").gameTiles.map(({tile,label,hit})=>({image:tile.getBounds(),label:label.getBounds(),cell:hit.getBounds()}))')
         for row in layout:
             for part in ['image','label']:
@@ -90,8 +91,17 @@ try:
         assert page.evaluate('()=>localStorage.getItem("tcm_request_sound") === "0" && readSoundSettings().other')
         assert page.evaluate('()=>{const panel=__testGame.scene.getScene("SelectScene").children.list.find(o=>o.depth === 300),row=panel.list.filter(o=>o.type === "Text" && Math.abs(o.y-1280*.52)<1);return row.find(o=>o.text === "Off").style.color === "#FFF8EC" && row.find(o=>o.text === "On").style.color === "#64513D" && row.some(o=>o.text === "Dolly request sound");}')
         assert abs(page.evaluate('()=>__testGame.sound.volume')-.6)<.001
+        for level,x in [(1,.23),(2,.41),(3,.59),(4,.77)]:
+            click(720*x,1280*.752)
+            assert page.evaluate('localStorage.getItem("tcm_memory_level")') == str(level)
+        assert page.evaluate('()=>{const panel=__testGame.scene.getScene("SelectScene").children.list.find(o=>o.depth === 300);return panel.list.some(o=>o.text === "6 cards with a preview");}')
         page.screenshot(path=str(ROOT/f'tests/artifacts/settings-{suffix}.png'))
-        click(360,1280*.72)
+        click(360,1280*.882)
+        if '--home-only' in sys.argv:
+            assert not errors, errors
+            print('PASS:',suffix,'Home layout, larger toys/friends, sleeping/neutral poses and parent settings',flush=True)
+            browser.close()
+            sys.exit(0)
         click(360,1280*.267)
         page.wait_for_function('()=>__testGame.scene.isActive("PlayScene")')
         page.wait_for_function('()=>__testGame.scene.getScene("PlayScene").currentRequest !== null',timeout=20000)
@@ -109,7 +119,7 @@ try:
         hold(670,1280*.055)
         click(720*.665,1280*.52) # Requests on.
         click(720*.825,1280*.61) # Other sounds off.
-        click(360,1280*.72)
+        click(360,1280*.882)
         assert page.evaluate('()=>readSoundSettings().requests && !readSoundSettings().other')
         # Every activity launches by tapping its label, with the selected plushie.
         for i,name in enumerate(['MemoryScene','CatchScene','TidyScene','CarScene']):
@@ -117,10 +127,12 @@ try:
             click(point['x'],point['y'])
             page.wait_for_function('(name)=>__testGame.scene.isActive(name)',arg=name,timeout=20000)
             page.wait_for_function('(name)=>__testGame.scene.getScene(name).children.list.some(o=>o.type === "Zone" && o.depth === 221)',arg=name)
-            assert page.evaluate('(name)=>{const s=__testGame.scene.getScene(name);return s.mode === "full" && s.characterId === "giraffe";}',name)
+            assert page.evaluate('(name)=>{const s=__testGame.scene.getScene(name);return s.mode === "full" && s.characterId === "giraffe" && (name !== "MemoryScene" || s.level === 4);}',name)
             assert page.evaluate('()=>{const s=__testGame.sound;const request=s.add("request_ball"),thanks=s.add("thank_you_1");request.play();thanks.play();const result=!request.mute && thanks.mute;request.destroy();thanks.destroy();return result;}')
             if name != 'MemoryScene':
                 assert page.evaluate('(name)=>otherSoundDestination(__testGame.scene.getScene(name)).gain.value === 0',name)
+            if name == 'CarScene':
+                page.screenshot(path=str(ROOT/f'tests/artifacts/drive-{suffix}.png'))
             print('PASS: launched',name,flush=True)
             click(670,60)
             page.wait_for_function('()=>__testGame.scene.isActive("SelectScene")')
@@ -133,6 +145,7 @@ try:
         click(670,60)
         page.wait_for_function('()=>__testGame.scene.isActive("PlayScene")')
         assert page.evaluate('()=>__testGame.scene.getScene("PlayScene").characterId === "giraffe"')
+        assert page.evaluate('localStorage.getItem("tcm_memory_level")') == '4'
         # Every mini game and its selection menu return to care on a child tap.
         for name in ['CatchScene','TidyScene','CarScene','MiniGameSelectScene']:
             start(name, {'characterId':'giraffe','mode':'mini'})
@@ -146,6 +159,7 @@ try:
         page.wait_for_function('()=>__testGame.scene.isActive("SelectScene")')
         assert page.evaluate('()=>readSoundSettings().volume === .6 && readSoundSettings().requests && !readSoundSettings().other')
         assert page.evaluate('()=>__testGame.scene.getScene("SelectScene").characterId === "giraffe"')
+        assert page.evaluate('localStorage.getItem("tcm_memory_level")') == '4'
         assert not errors,errors
         print('PASS:',suffix,'Home launches, plushie choice, settings hold/cancel/shield, volume, independent categories after play(), synth gating, one-tap full/mini exits and reload persistence',flush=True)
         browser.close()

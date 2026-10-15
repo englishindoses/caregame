@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tcm-v18';
+const CACHE_NAME = 'tcm-v19';
 
 const ASSETS = [
     './',

@@ -86,7 +86,7 @@ function addParentSettings(scene) {
         scene._settingsOpen = true;
         panel = scene.add.container(0, 0).setDepth(300);
         const shield = scene.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.6).setInteractive();
-        const panelX = W * 0.04, panelY = H * 0.23, panelW = W * 0.92, panelH = H * 0.56;
+        const panelX = W * 0.04, panelY = H * 0.23, panelW = W * 0.92, panelH = H * 0.70;
         const bg = scene.add.graphics();
         bg.fillStyle(0xFFF8EC).fillRoundedRect(panelX, panelY, panelW, panelH, W * 0.04);
         panel.add([shield, bg]);
@@ -105,8 +105,8 @@ function addParentSettings(scene) {
             panel.add(zone);
             const paint = selected => {
                 background.clear();
-                background.fillStyle(selected ? 0x72865B : 0xF8F3E9).fillRoundedRect(x - width / 2, y - height / 2, width, height, height / 2);
-                background.lineStyle(selected ? 3 : 2, selected ? 0x5C7047 : 0xC8BCA9).strokeRoundedRect(x - width / 2, y - height / 2, width, height, height / 2);
+                background.fillStyle(selected ? 0x9B613C : 0xF8F3E9).fillRoundedRect(x - width / 2, y - height / 2, width, height, height / 2);
+                background.lineStyle(selected ? 3 : 2, selected ? 0x794624 : 0xC8BCA9).strokeRoundedRect(x - width / 2, y - height / 2, width, height, height / 2);
                 label.setColor(selected ? '#FFF8EC' : '#64513D');
             };
             paint(false);
@@ -117,14 +117,14 @@ function addParentSettings(scene) {
         const sliderLeft = W * 0.15, sliderWidth = W * 0.70, sliderY = H * 0.432;
         const track = scene.add.graphics();
         panel.add(track);
-        const thumb = scene.add.circle(0, sliderY, W * 0.028, 0x72865B).setStrokeStyle(4, 0xFFF8EC);
+        const thumb = scene.add.circle(0, sliderY, W * 0.028, 0x9B613C).setStrokeStyle(4, 0xFFF8EC);
         panel.add(thumb);
         const redrawVolume = () => {
             const value = readSoundSettings().volume;
             volume.setText(`Volume: ${Math.round(value * 100)}%`);
             track.clear();
             track.fillStyle(0xD8CEBD).fillRoundedRect(sliderLeft, sliderY - 6, sliderWidth, 12, 6);
-            if (value > 0) track.fillStyle(0x9DAF86).fillRoundedRect(sliderLeft, sliderY - 6, sliderWidth * value, 12, 6);
+            if (value > 0) track.fillStyle(0xD6A16D).fillRoundedRect(sliderLeft, sliderY - 6, sliderWidth * value, 12, 6);
             thumb.setX(sliderLeft + sliderWidth * value);
         };
         const setVolumeFromX = x => {
@@ -156,7 +156,29 @@ function addParentSettings(scene) {
         };
         options('tcm_request_sound', 'requests', 'Dolly request sound', H * 0.52);
         options('tcm_other_sound', 'other', 'Other sounds', H * 0.61);
-        const done = button(W / 2, H * 0.72, W * 0.65, 'Done', () => {
+        text(W / 2, H * 0.695, 'Full Memory level', W * 0.043);
+        const levelDescriptions = {
+            1: 'Guided matching: 4, then 6 cards',
+            2: '4 cards with a preview',
+            3: '4 cards, no preview',
+            4: '6 cards with a preview',
+        };
+        const levelDescription = text(W / 2, H * 0.804, '', W * 0.031);
+        const levelButtons = [];
+        const redrawLevel = () => {
+            const level = readMemoryLevel();
+            levelButtons.forEach((choice, index) => choice.paint(index + 1 === level));
+            levelDescription.setText(levelDescriptions[level]);
+        };
+        Object.keys(MEMORY_LEVELS).forEach((key, index) => {
+            levelButtons.push(button(W * (0.23 + index * 0.18), H * 0.752, W * 0.15, key, () => {
+                localStorage.setItem('tcm_memory_level', key);
+                redrawLevel();
+            }));
+        });
+        redrawLevel();
+        text(W / 2, H * 0.832, 'Mini Memory stays the same', W * 0.027);
+        const done = button(W / 2, H * 0.882, W * 0.65, 'Done', () => {
             panel.destroy(true);
             panel = null;
             scene._settingsOpen = false;
@@ -169,7 +191,7 @@ function addParentSettings(scene) {
         arc = scene.add.graphics().setDepth(222);
         const progress = { value: 0 };
         hold = scene.tweens.add({ targets: progress, value: 1, duration: 2000,
-            onUpdate: () => arc.clear().lineStyle(4, 0x72865B).beginPath().arc(x, y, 41, -Math.PI / 2, -Math.PI / 2 + progress.value * Math.PI * 2).strokePath(),
+            onUpdate: () => arc.clear().lineStyle(4, 0x9B613C).beginPath().arc(x, y, 41, -Math.PI / 2, -Math.PI / 2 + progress.value * Math.PI * 2).strokePath(),
             onComplete: () => { cancel(); open(); },
         });
     });
