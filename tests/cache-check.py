@@ -53,7 +53,7 @@ with sync_playwright() as p:
     page.goto('http://127.0.0.1:' + str(server.server_port) + '/')
     page.wait_for_function('() => window.__testGame?.scene.isActive("SelectScene")')
     page.evaluate('() => navigator.serviceWorker.ready')
-    page.evaluate('async ([cdn, bundle]) => { const cache = await caches.open("tcm-v19"); await cache.put(cdn, new Response(bundle, {headers:{"Content-Type":"application/javascript"}})); }', [cdn, bundle])
+    page.evaluate('async ([cdn, bundle]) => { const cache = await caches.open("tcm-v20"); await cache.put(cdn, new Response(bundle, {headers:{"Content-Type":"application/javascript"}})); }', [cdn, bundle])
     for asset in expected:
         assert page.evaluate('async asset => !!(await caches.match(new URL(asset,location.href)))', asset), asset
     # All local offline requests must be served by the worker, not HTTP routes.

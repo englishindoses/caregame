@@ -61,6 +61,10 @@ try:
         assert page.evaluate('()=>{const s=__testGame.scene.getScene("SelectScene"),selected=s.plushieChoices.find(c=>c.id === s.characterId).picture;return s.children.list.some(o=>o.text === "Care Game") && s.plushieChoices.filter(c=>c.id !== s.characterId).every(c=>c.picture.displayHeight < selected.displayHeight && Math.abs(c.picture.y+c.picture.displayHeight/2 - selected.y-selected.displayHeight/2) < 1);}')
         assert page.evaluate('()=>{const s=__testGame.scene.getScene("SelectScene");return s.plushieChoices.every(c=>c.picture.texture.key === c.id+"_"+(c.id === s.characterId ? "neutral" : "sleeping")) && s.carePicture.texture.key === "giraffe_neutral";}')
         assert page.evaluate('()=>!__testGame.scene.getScene("SelectScene").children.list.some(o=>o.text === "Choose a friend")')
+        for character in ['dolly','bunny','giraffe']:
+            point=page.evaluate('(id)=>{const h=__testGame.scene.getScene("SelectScene").plushieChoices.find(c=>c.id === id).hit;return {x:h.x,y:h.y};}',character)
+            click(point['x'],point['y'])
+            assert page.evaluate('(id)=>{const s=__testGame.scene.getScene("SelectScene"),chosen=s.plushieChoices.find(c=>c.id === id).picture;return s.characterId === id && s.plushieChoices.every(c=>{const b=c.picture.getBounds();return b.left>=-1 && b.right<=721 && (c.id === id || chosen.displayWidth>c.picture.displayWidth*1.2);});}',character)
         layout=page.evaluate('()=>__testGame.scene.getScene("SelectScene").gameTiles.map(({tile,label,hit})=>({image:tile.getBounds(),label:label.getBounds(),cell:hit.getBounds()}))')
         for row in layout:
             for part in ['image','label']:

@@ -27,20 +27,20 @@ class SelectScene extends Phaser.Scene {
             this.scene.start(destination, { characterId: this.characterId, mode, fromSelect: destination === 'PlayScene' });
         };
         // Positions follow the photographed shelf, expressed as canvas fractions.
-        this.carePicture = this.add.image(W * 0.5, H * 0.235, `${this.characterId}_neutral`);
+        this.carePicture = this.add.image(W * 0.5, H * 0.187, `${this.characterId}_neutral`);
         this.resizeCarePicture();
-        this.add.text(W * 0.5, H * 0.285, 'Care Game', {
+        this.add.text(W * 0.5, H * 0.264, 'Care Game', {
             fontFamily: 'Quicksand, Arial', fontSize: `${W * 0.052}px`, color: '#59402A',
             stroke: '#F9E5C6', strokeThickness: 3,
         }).setOrigin(0.5);
-        this.add.zone(W * 0.5, H * 0.248, W * 0.43, H * 0.108)
+        this.add.zone(W * 0.5, H * 0.20, W * 0.48, H * 0.16)
             .setInteractive({ useHandCursor: true }).on('pointerdown', () => launch('PlayScene'));
         this.gameTiles = [];
         ALL_GAMES.forEach((game, i) => {
             const left = W * (i % 2 ? 0.51 : 0.17);
-            const top = H * (i < 2 ? 0.313 : 0.459);
-            const cellW = W * 0.31, cellH = H * (i < 2 ? 0.146 : 0.168);
-            const x = left + cellW / 2, y = H * (i < 2 ? 0.373 : 0.522);
+            const top = H * (i < 2 ? 0.285 : 0.47);
+            const cellW = W * 0.31, cellH = H * (i < 2 ? 0.17 : 0.158);
+            const x = left + cellW / 2, y = H * (i < 2 ? 0.351 : 0.53);
             // Trim transparent margins for Home only, so the actual toy fills its cubby.
             const content = {
                 memory: [28, 58, 248, 188], catch: [3, 3, 232, 232],
@@ -49,17 +49,17 @@ class SelectScene extends Phaser.Scene {
             const texture = this.textures.get(game.image);
             if (!texture.has('home_content')) texture.add('home_content', 0, ...content);
             const tile = this.add.image(x, y, game.image, 'home_content').setDepth(1);
-            tile.setScale(Math.min(cellW * 0.91 / tile.width, H * (i < 2 ? 0.112 : 0.12) / tile.height));
+            tile.setScale(Math.min(cellW * 0.91 / tile.width, H * (i < 2 ? 0.115 : 0.114) / tile.height));
             const base = tile.scaleX;
             this.tweens.add({ targets: tile, scale: base * 1.03, duration: 1500, yoyo: true, repeat: -1 });
-            const label = this.add.text(x, H * (i < 2 ? 0.445 : 0.604), game.name, {
+            const label = this.add.text(x, H * (i < 2 ? 0.433 : 0.61), game.name, {
                 fontFamily: 'Quicksand, Arial', fontSize: `${W * 0.036}px`, color: '#64513D',
             }).setOrigin(0.5).setDepth(1);
             const hit = this.add.zone(x, top + cellH / 2, cellW, cellH).setDepth(2).setInteractive({ useHandCursor: true });
             hit.on('pointerdown', () => launch(game.scene, 'full'));
             this.gameTiles.push({ id: game.id, tile, label, hit });
         });
-        this.plushieLabel = this.add.text(W / 2, H * 0.976, '', {
+        this.plushieLabel = this.add.text(W / 2, H * 0.982, '', {
             fontFamily: 'Quicksand, Arial', fontSize: `${W * 0.043}px`, color: '#64513D',
             stroke: '#FFF4DE', strokeThickness: 4,
         }).setOrigin(0.5);
@@ -79,7 +79,7 @@ class SelectScene extends Phaser.Scene {
     }
 
     resizeCarePicture() {
-        this.carePicture.setScale(Math.min(this.scale.width * 0.15, this.scale.height * 0.075) / Math.max(this.carePicture.width, this.carePicture.height));
+        this.carePicture.setScale(Math.min(this.scale.width * 0.24, this.scale.height * 0.112) / Math.max(this.carePicture.width, this.carePicture.height));
     }
 
     updatePlushie() {
@@ -91,12 +91,12 @@ class SelectScene extends Phaser.Scene {
         this.plushieChoices.forEach(({ id, picture, hit }, index) => {
             const selected = id === this.characterId;
             picture.setTexture(`${id}_${selected ? 'neutral' : 'sleeping'}`);
-            const size = W * (selected ? 0.36 : 0.33);
+            const size = W * (selected ? 0.46 : 0.37);
             picture.setScale(size / Math.max(picture.width, picture.height));
-            const x = W * (0.18 + index * 0.32);
-            const feet = H * 0.935;
-            picture.setPosition(x, feet - picture.displayHeight / 2);
-            hit.setPosition(x, picture.y);
+            const x = W * (index === 1 ? 0.5 : index === 0 ? (selected ? 0.23 : 0.185) : (selected ? 0.77 : 0.815));
+            const feet = H * 0.94;
+            picture.setPosition(x, feet - picture.displayHeight / 2).setDepth(selected ? 4 : 3);
+            hit.setPosition(x, picture.y).setDepth(selected ? 6 : 5);
             hit.setSize(W * 0.31, Math.max(H * 0.10, picture.displayHeight));
         });
     }

@@ -2,11 +2,17 @@
 
 Generated with the built-in image generation tool, using the temporary honey oak and little-house options as references. Runtime asset: `assets/images/bg_home.webp`, resized to 720 x 1280 and encoded as WebP at quality 90. Temporary option images remain under `output/home-background-options/` and are not runtime assets.
 
-Home places Care Game on the roof, the four full games inside the cubbies and the three selectable friends on the rug. The selected friend uses its neutral image; the other two use sleeping images. Positions follow fractions of the background dimensions. The background loads in Boot and is precached in `tcm-v19`.
+Home places Care Game on the roof, the four full games inside the cubbies and the three selectable friends on the rug. The selected friend uses its neutral image; the other two use sleeping images. Positions follow fractions of the background dimensions. The background loads in Boot and is precached in `tcm-v20`.
+
+The taller-shelf revision gives each cubby room for its picture and label together. Care art is approximately 49% larger, waiting friends 12% larger and the selected friend 28% larger than the previous layout. The selected friend renders in front, with edge positions adjusted to keep every selection inside the canvas.
 
 The revised room puts the window on the right, matching the little-house option, and replaces plants with books, a blanket basket and a wooden duck. Larger friends share a floor baseline on the rug. Home-only texture frames remove transparent icon margins so each toy fills most of its cubby; labels sit on the wooden shelf edges. Parent settings use warm oak brown and cream instead of green. A parent can choose full Memory levels 1?4, saved immediately in the existing tcm_memory_level preference; mini Memory retains its fixed level and never writes this preference.
 
 ## Final prompt
+
+### Taller shelf
+
+Edit only the wooden shelving unit in this room. The two rows of rectangular storage cubbies must be substantially TALLER, each row 35 percent taller than currently. Keep roof peak and top of upper cubbies in place. Move the middle divider DOWN, and move the bottom shelf and feet much further DOWN, ending just above the rug. The rectangular shelf body should be almost square, not short and wide. Keep 2 columns and 2 rows, EMPTY. Preserve roof, room, right window, no plants, rug foreground and warm honey oak style. Portrait image. Do not add text, characters or toys inside shelf.
 
 ### Revision
 
